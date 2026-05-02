@@ -1,0 +1,2900 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مسابقة التوقعات الاحترافية</title>
+
+    <script>
+        let html2canvasReady = false;
+        function loadHtml2canvas() {
+            return new Promise((resolve, reject) => {
+                if (typeof html2canvas !== 'undefined') {
+                    html2canvasReady = true;
+                    resolve();
+                    return;
+                }
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+                script.onload = () => { html2canvasReady = true; resolve(); };
+                script.onerror = () => {
+                    const fallbackScript = document.createElement('script');
+                    fallbackScript.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
+                    fallbackScript.onload = () => { html2canvasReady = true; resolve(); };
+                    fallbackScript.onerror = () => reject(new Error('فشل تحميل مكتبة التصوير'));
+                    document.head.appendChild(fallbackScript);
+                };
+                document.head.appendChild(script);
+            });
+        }
+        async function ensureHtml2canvas() {
+            if (html2canvasReady && typeof html2canvas !== 'undefined') return true;
+            try { await loadHtml2canvas(); return true; } catch (error) { console.error(error); return false; }
+        }
+        loadHtml2canvas().catch(err => console.warn('تحميل html2canvas الأولي فشل'));
+
+        // تحميل مكتبة confetti للتأثيرات الاحتفالية
+        function loadConfetti() {
+            return new Promise((resolve) => {
+                if (typeof confetti !== 'undefined') { resolve(); return; }
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js';
+                script.onload = () => resolve();
+                script.onerror = () => resolve();
+                document.head.appendChild(script);
+            });
+        }
+        loadConfetti();
+        let confettiReady = false;
+        (async () => { await loadConfetti(); confettiReady = true; })();
+    </script>
+
+    <style>
+        :root {
+            --primary: #111827;
+            --primary-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --accent: #10b981;
+            --danger: #ef4444;
+            --gold: #16a34a;
+            --blue: #2563eb;
+            --orange: #f59e0b;
+            --purple: #8b5cf6;
+            --mvp-gold: #fbbf24;
+            --bg: #f3f4f6;
+            --container-bg: #ffffff;
+            --text-main: #1f2937;
+            --border-clr: #d1d5db;
+            --match-bg: #f8fafc;
+            --actual-bg: #fef3c7;
+            --input-bg: #f9fafb;
+            --card-bg: #ffffff;
+            --general-live-bg: linear-gradient(135deg, #f0f9ff, #ffffff);
+            --btn-text: #111827;
+            --table-row-hover: #f3f4f6;
+            --vet-bg: #111827;
+            --vet-gold: #fbbf24;
+            --vet-card-bg: rgba(255, 255, 255, 0.05);
+            --vet-border: rgba(255, 255, 255, 0.1);
+            --vet-text: #f8fafc;
+            --badge-bg: #fef3c7;
+            --badge-text: #92400e;
+            --rm-color: #f1c40f;
+            --barca-color: #a50044;
+        }
+        body.dark-mode {
+            --primary: #030712;
+            --primary-gradient: linear-gradient(135deg, #0f172a 0%, #1e40af 100%);
+            --bg: #030712;
+            --container-bg: #111827;
+            --text-main: #f9fafb;
+            --border-clr: #374151;
+            --match-bg: #1f2937;
+            --actual-bg: #422006;
+            --input-bg: #1f2937;
+            --card-bg: #111827;
+            --general-live-bg: linear-gradient(135deg, #111827, #030712);
+            --btn-text: #f9fafb;
+            --table-row-hover: #1f2937;
+            --badge-bg: #422006;
+            --badge-text: #fbbf24;
+        }
+        body.theme-sports {
+            --primary: #004d40;
+            --primary-gradient: linear-gradient(135deg, #004d40 0%, #00796b 100%);
+            --blue: #0288d1;
+            --accent: #ffb300;
+        }
+        body.theme-luxury {
+            --primary: #1a1a1a;
+            --primary-gradient: linear-gradient(135deg, #2c3e50 0%, #000000 100%);
+            --bg: #121212;
+            --container-bg: #1e1e1e;
+            --text-main: #f5f5dc;
+            --border-clr: #333333;
+            --match-bg: #2a2a2a;
+            --card-bg: #1e1e1e;
+            --actual-bg: #3e2723;
+            --blue: #d4af37;
+            --accent: #d4af37;
+            --table-row-hover: #2d2d2d;
+            --btn-text: #f5f5dc;
+            --general-live-bg: linear-gradient(135deg, #1e1e1e, #121212);
+            --badge-bg: #3e2723;
+            --badge-text: #ffb300;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: background-color 0.3s, color 0.3s, font-size 0.3s;
+            margin: 0;
+        }
+        body.live-mode {
+            font-size: 1.15rem;
+        }
+        body.live-mode table {
+            font-size: 0.95rem;
+        }
+        body.live-mode th {
+            font-size: 0.9rem;
+        }
+        body.live-mode .btn {
+            font-size: 1rem;
+            padding: 12px;
+        }
+        .theme-toggle-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background: var(--blue);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: 0.3s;
+        }
+        .theme-toggle-btn:hover {
+            transform: scale(1.1);
+        }
+        .live-mode-btn {
+            position: fixed;
+            top: 70px;
+            left: 15px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: 0.3s;
+        }
+        .live-mode-btn:hover {
+            transform: scale(1.1);
+        }
+        .live-mode-btn.active-live {
+            background: #10b981;
+            animation: pulse-live 1.5s infinite;
+        }
+        @keyframes pulse-live {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+            }
+            50% {
+                box-shadow: 0 0 0 15px rgba(16, 185, 129, 0);
+            }
+        }
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            background: var(--container-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+            border: 1px solid var(--border-clr);
+            box-sizing: border-box;
+        }
+        .table-header-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-clr);
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .table-header-wrapper h2 {
+            color: var(--primary);
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .table-responsive-container {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            background: var(--card-bg);
+            border: 1px solid var(--border-clr);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        th:nth-child(1) {
+            width: 14%;
+        }
+        th:nth-child(2) {
+            width: 11%;
+        }
+        th:nth-child(n+3) {
+            width: 7.5%;
+        }
+        th,
+        td {
+            padding: 8px 4px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            border: 1px solid var(--border-clr);
+            word-wrap: break-word;
+            vertical-align: middle;
+        }
+        th {
+            background: var(--primary-gradient);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.8rem;
+            padding: 10px 2px;
+            border-bottom: none;
+            transition: all 0.3s ease;
+            line-height: 1.4;
+        }
+        th .crown-icon {
+            color: #fbbf24;
+            font-size: 1rem;
+            animation: glow-crown 1.5s infinite alternate;
+        }
+        @keyframes glow-crown {
+            from {
+                text-shadow: 0 0 5px #fbbf24;
+            }
+            to {
+                text-shadow: 0 0 15px #fbbf24, 0 0 25px #f59e0b;
+            }
+        }
+        th.clickable-name {
+    cursor: pointer;
+    text-decoration: none;
+        }
+        th.clickable-name:hover {
+            color: #fbbf24;
+        }
+        tbody tr:hover td {
+            background-color: var(--table-row-hover);
+        }
+        .match-label {
+            background-color: var(--match-bg);
+            font-weight: 700;
+            color: var(--primary);
+            border-right: 3px solid var(--blue);
+            font-size: 0.8rem;
+        }
+        body.dark-mode .match-label {
+            color: var(--text-main);
+        }
+      .actual-result-cell {
+    background-color: var(--actual-bg);
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap; /* منع الالتفاف العمودي */
+    padding: 5px 4px;
+}
+
+.score-btn {
+    display: inline-block;
+    width: 20px;                  /* تكبير العرض */
+    height: 34px;                 /* تكبير الارتفاع */
+    line-height: 32px;            /* محاذاة النص الرأسي */
+    font-size: 1rem;              /* تكبير الخط */
+    font-weight: bold;
+    background: var(--container-bg);
+    border: 2px solid var(--border-clr);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--btn-text);
+    margin: 0 2px;
+    vertical-align: middle;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.score-btn.is-active {
+    border-color: var(--blue);
+    background-color: var(--blue);
+    color: white;
+    box-shadow: 0 2px 5px rgba(59,130,246,0.4);
+
+        }
+        .score-btn:hover {
+            border-color: var(--blue);
+            transform: translateY(-1px);
+        }
+        .is-active {
+            border-color: var(--blue);
+            background-color: var(--blue);
+            color: white;
+            box-shadow: 0 2px 5px rgba(59, 130, 246, 0.4);
+        }
+        .result-icon {
+            font-size: 1.2rem;
+            display: inline-block;
+            margin: 0 3px;
+        }
+        .state-exact {
+            background-color: #059669 !important;
+            color: #ffffff !important;
+            font-weight: 800 !important;
+        }
+        .state-outcome {
+            background-color: #d1fae5 !important;
+            color: #065f46 !important;
+            font-weight: 700 !important;
+        }
+        .state-wrong {
+            background-color: #fee2e2 !important;
+            color: #b91c1c !important;
+        }
+        body.dark-mode .state-exact {
+            background-color: #047857 !important;
+            color: #ffffff !important;
+        }
+        body.dark-mode .state-outcome {
+            background-color: #064e3b !important;
+            color: #a7f3d0 !important;
+        }
+        body.dark-mode .state-wrong {
+            background-color: #7f1d1d !important;
+            color: #fca5a5 !important;
+        }
+        tfoot tr {
+            border-top: 2px solid var(--primary);
+        }
+        .points-row {
+            background-color: rgba(59, 130, 246, 0.08);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .auto-row {
+            background-color: rgba(245, 158, 11, 0.08);
+            font-weight: bold;
+            color: var(--orange);
+            display: none;
+        }
+        .sub-name {
+            display: block;
+            font-size: 0.65rem;
+            opacity: 0.7;
+            margin-top: 2px;
+            font-weight: normal;
+            color: inherit;
+            transition: all 0.3s ease;
+        }
+        .badge-icon {
+            display: inline-block;
+            font-size: 0.8rem;
+            margin: 0 1px;
+            cursor: help;
+            vertical-align: middle;
+        }
+        .badge-icon:hover {
+            transform: scale(1.3);
+            transition: transform 0.2s;
+        }
+        .progress-bar-wrap {
+            width: 100%;
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            margin-top: 3px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--blue);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+        textarea {
+            width: 100%;
+            height: 80px;
+            padding: 12px;
+            color: var(--text-main);
+            border: 1px solid var(--border-clr);
+            border-radius: 8px;
+            margin-top: 15px;
+            font-family: inherit;
+            resize: none;
+            background: var(--input-bg);
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        textarea:focus {
+            border-color: var(--blue);
+            outline: none;
+        }
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+            width: 100%;
+        }
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-width: 140px;
+        }
+        .btn-green {
+            background-color: var(--accent);
+        }
+        .btn-orange {
+            background-color: var(--orange);
+        }
+        .btn-blue {
+            background-color: var(--blue);
+        }
+        .btn-purple {
+            background-color: var(--purple);
+        }
+        .btn-dark {
+            background-color: var(--primary);
+        }
+        .btn-red {
+            background-color: var(--danger);
+        }
+        .btn-teal {
+            background-color: #0f766e;
+        }
+        .btn-grey {
+            background-color: #475569;
+        }
+        .btn-mvp {
+            background-color: var(--mvp-gold);
+            color: #000;
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+        }
+        .btn-joker {
+            background-color: #8b5cf6;
+            color: #fff;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+        }
+        .btn-rm {
+            background: linear-gradient(45deg, #f1c40f, #f39c12);
+            color: #000;
+        }
+        .btn-barca {
+            background: linear-gradient(45deg, #a50044, #c0392b);
+            color: #fff;
+        }
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .snap-btn {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            min-width: auto;
+            border-radius: 6px;
+            flex: none;
+        }
+        .snap-icon {
+            font-size: 1rem;
+        }
+        .live-section {
+            width: 100%;
+            max-width: 1400px;
+            background: var(--general-live-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-clr);
+            box-sizing: border-box;
+        }
+        .section-header {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid var(--border-clr);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .section-header h2 {
+            border: none;
+            margin: 0;
+            padding: 0;
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+        .section-header .snap-btn {
+            position: absolute;
+            left: 0;
+        }
+        .section-header .copy-stats-btn {
+            position: absolute;
+            right: 15px;
+            left: auto;
+        }
+        .rankings-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: space-between;
+        }
+        .ranking-card {
+            flex: 1;
+            min-width: 280px;
+            background: var(--card-bg);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-clr);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        }
+        .ranking-card h3 {
+            color: white;
+            margin-top: 0;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        .bg-daily {
+            background-color: var(--blue);
+        }
+        .bg-weekly {
+            background-color: var(--accent);
+        }
+        .bg-monthly {
+            background-color: var(--orange);
+        }
+        .bg-rm {
+            background: linear-gradient(45deg, #f1c40f, #f39c12);
+            color: #000;
+        }
+        .bg-barca {
+            background: linear-gradient(45deg, #a50044, #c0392b);
+            color: #fff;
+        }
+        .ranking-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: right;
+        }
+        .ranking-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 5px;
+            border-bottom: 1px dashed var(--border-clr);
+            font-weight: 600;
+            align-items: center;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            cursor: default;
+            flex-wrap: wrap;
+        }
+        .ranking-list li:last-child {
+            border-bottom: none;
+        }
+        .ranking-list li .player-clickable {
+         cursor: pointer;
+         text-decoration: none;
+        }
+        .ranking-list li .player-clickable:hover {
+            color: var(--blue);
+        }
+        .rank-pos {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+            background: var(--border-clr);
+            border-radius: 50%;
+            margin-left: 8px;
+            font-size: 0.8rem;
+            color: var(--btn-text);
+        }
+        .rank-1 .rank-pos {
+            background: #fbbf24;
+            color: #000;
+            box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+        }
+        .rank-2 .rank-pos {
+            background: #94a3b8;
+            color: #000;
+        }
+        .rank-3 .rank-pos {
+            background: #b45309;
+            color: #fff;
+        }
+        .indicator {
+            display: inline-block;
+            width: 20px;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+        .crown-icon-sm {
+            color: #fbbf24;
+            margin: 0 3px;
+            font-size: 0.9rem;
+        }
+        .joker-icon {
+            font-size: 1.2rem;
+            margin: 0 3px;
+        }
+        .fan-badge {
+            font-size: 1rem;
+            margin: 0 3px;
+        }
+        .league-section {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            border: 1px solid #334155;
+        }
+        .league-section .section-header {
+            border-bottom: 1px solid rgba(251, 191, 36, 0.2);
+        }
+        .league-section .section-header h2 {
+            color: var(--vet-gold);
+        }
+        .vet-card {
+            background: var(--vet-card-bg);
+            border: 1px solid var(--vet-border);
+            backdrop-filter: blur(5px);
+        }
+        .bg-vet-daily {
+            background: linear-gradient(45deg, #1d4ed8, #2563eb);
+        }
+        .bg-vet-weekly {
+            background: linear-gradient(45deg, #047857, #059669);
+        }
+        .bg-vet-monthly {
+            background: linear-gradient(45deg, #b45309, #d97706);
+        }
+        .vet-card .ranking-list li {
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+            color: var(--vet-text);
+        }
+        .vet-card .rank-pos {
+            background: rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+        }
+        .vet-card .rank-1 .rank-pos {
+            background: var(--vet-gold);
+            color: #000;
+        }
+        .stats-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-clr);
+            border-radius: 8px;
+            padding: 12px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s;
+            gap: 8px;
+        }
+        .stats-card:hover {
+            transform: translateY(-2px);
+        }
+        .stats-title {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: var(--blue);
+            border-bottom: 1px solid var(--border-clr);
+            padding-bottom: 5px;
+            width: 100%;
+            text-align: right;
+        }
+        .stats-data {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-main);
+            width: 100%;
+            text-align: right;
+        }
+        .stats-val {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-right: 5px;
+            font-weight: normal;
+            color: #ef4444;
+        }
+        .dist-wrap {
+            display: flex;
+            flex-direction: column;
+            margin-top: 6px;
+        }
+        .dist-bar {
+            display: flex;
+            width: 100%;
+            height: 5px;
+            border-radius: 3px;
+            overflow: hidden;
+            background: #e5e7eb;
+        }
+        .dist-h {
+            background: #10b981;
+        }
+        .dist-d {
+            background: #9ca3af;
+        }
+        .dist-a {
+            background: #3b82f6;
+        }
+        .dist-text {
+            font-size: 0.65rem;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2px;
+            color: var(--text-main);
+            opacity: 0.8;
+            font-weight: normal;
+        }
+        #specialCaptureContainer {
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+            z-index: 10000;
+        }
+        .story-format {
+            width: 540px;
+            height: 960px;
+            padding: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--blue));
+            color: white;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .story-format h2 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            color: #fbbf24;
+            text-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+            border-bottom: 2px dashed rgba(255, 255, 255, 0.3);
+            padding-bottom: 15px;
+            width: 100%;
+        }
+        .story-format .story-list {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            list-style: none;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        .story-format .story-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.6rem;
+            padding: 18px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+            align-items: center;
+        }
+        .story-format .story-item:last-child {
+            border-bottom: none;
+        }
+        .story-format .story-pts {
+            color: #fbbf24;
+        }
+        .story-format .story-rank {
+            background: white;
+            color: black;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 15px;
+            font-size: 1.4rem;
+        }
+        .mvp-format {
+            width: 450px;
+            height: 650px;
+            border: 6px solid #fbbf24;
+            border-radius: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+            padding: 30px;
+            box-shadow: 0 0 40px rgba(251, 191, 36, 0.4);
+            background-image: linear-gradient(145deg, #111827, #374151);
+            position: relative;
+            box-sizing: border-box;
+        }
+        .mvp-format::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg width="20" height="20" xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.05)"/></svg>');
+            opacity: 0.5;
+            z-index: 0;
+            border-radius: 20px;
+        }
+        .mvp-format>* {
+            z-index: 1;
+        }
+        .mvp-format .mvp-title {
+            color: #fbbf24;
+            font-size: 2rem;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        .mvp-format .mvp-icon {
+            font-size: 7rem;
+            margin: 30px 0;
+            text-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+        .mvp-format .mvp-name {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            text-align: center;
+        }
+        .mvp-format .mvp-stats {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+            box-sizing: border-box;
+        }
+        .mvp-format .stat-box {
+            text-align: center;
+            flex: 1;
+        }
+        .mvp-format .stat-val {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #10b981;
+        }
+        .mvp-format .stat-label {
+            font-size: 1rem;
+            color: #d1d5db;
+            margin-top: 5px;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal-content {
+            background: var(--container-bg);
+            border-radius: 16px;
+            padding: 25px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            text-align: right;
+            position: relative;
+            color: var(--text-main);
+            border: 2px solid var(--border-clr);
+        }
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .modal-content h3 {
+            margin-top: 0;
+            color: var(--blue);
+            border-bottom: 2px solid var(--border-clr);
+            padding-bottom: 10px;
+        }
+        .modal-stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border-clr);
+        }
+        .modal-stat-row:last-child {
+            border-bottom: none;
+        }
+        .modal-badge {
+            font-size: 1.2rem;
+        }
+
+        /* Head-to-Head Section */
+        .h2h-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-clr);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 10px;
+        }
+        .h2h-section h3 {
+            color: var(--blue);
+        }
+        .h2h-selects {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .h2h-selects select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-clr);
+            background: var(--input-bg);
+            color: var(--text-main);
+            font-size: 0.9rem;
+        }
+        .h2h-vs {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--orange);
+        }
+        .radar-canvas-wrap {
+            text-align: center;
+            margin: 10px 0;
+        }
+        .h2h-compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .h2h-compare-table td,
+        .h2h-compare-table th {
+            padding: 6px;
+            border: 1px solid var(--border-clr);
+            font-size: 0.8rem;
+        }
+        .h2h-compare-table th {
+            background: var(--primary-gradient);
+            color: white;
+            font-size: 0.75rem;
+        }
+
+        /* Fan section */
+        .fan-card {
+            background: var(--vet-card-bg);
+            border: 1px solid var(--vet-border);
+            backdrop-filter: blur(5px);
+            text-align: center;
+            padding: 15px;
+            border-radius: 12px;
+            color: var(--vet-text);
+            min-width: 200px;
+            flex: 1;
+        }
+        .fan-points {
+            font-size: 2rem;
+            font-weight: 900;
+            margin: 10px 0;
+        }
+        .fan-team-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        .fan-card .fan-team-icon img {
+            vertical-align: middle;
+            max-width: 60px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <button class="theme-toggle-btn" onclick="toggleTheme()" title="تغيير الوضع المظلم/الفاتح">🌓</button>
+    <button class="live-mode-btn" id="btnLiveMode" onclick="toggleLiveMode()" title="وضع العرض الحي">📺</button>
+
+    <div class="container">
+
+        <div class="table-header-wrapper">
+            <h2>🏆 مسابقة التوقعات الاحترافية 🏆</h2>
+            <div class="header-actions">
+                <button id="btnAnonymize" class="btn btn-dark snap-btn" onclick="toggleAnonymous()">🥷 تشفير الأسماء</button>
+                <button id="btnSnapTable" class="btn btn-blue snap-btn" onclick="takeSnapshot('tableCaptureArea', 'جدول_التوقعات', this)"><span class="snap-icon">📸</span> تصوير الجدول</button>
+            </div>
+        </div>
+        <div style="width: 100%; margin-bottom: 20px; background: var(--card-bg); padding: 15px; border-radius: 10px; border: 1px solid var(--border-clr);">
+            <div id="tableCaptureArea" style="padding: 10px; background: var(--container-bg); border-radius: 12px;">
+                <div class="table-responsive-container">
+                    <table id="mainTable">
+                        <thead>
+                            <tr>
+                                <th>المباراة</th>
+                                <th>النتيجة</th>
+                                <th data-name="أحمد العودي" class="clickable-name" onclick="showPlayerModal('أحمد العودي',0)">أحمد العودي</th>
+                                <th data-name="نبيل الهمداني" class="clickable-name" onclick="showPlayerModal('نبيل الهمداني',1)">نبيل الهمداني</th>
+                                <th data-name="محمد الذبحاني" class="clickable-name" onclick="showPlayerModal('محمد الذبحاني',2)">محمد الذبحاني</th>
+                                <th data-name="رشيد الغزالي" class="clickable-name" onclick="showPlayerModal('رشيد الغزالي',3)">رشيد الغزالي</th>
+                                <th data-name="صدام المرشحي" class="clickable-name" onclick="showPlayerModal('صدام المرشحي',4)">صدام المرشحي</th>
+                                <th data-name="وحيد القابل" class="clickable-name" onclick="showPlayerModal('وحيد القابل',5)">وحيد القابل</th>
+                                <th data-name="محمد الجرافي" class="clickable-name" onclick="showPlayerModal('محمد الجرافي',6)">محمد الجرافي</th>
+                                <th data-name="عبد الرحمن" class="clickable-name" onclick="showPlayerModal('عبد الرحمن',7)">عبد الرحمن</th>
+                                <th data-name="علاء الدين" class="clickable-name" onclick="showPlayerModal('علاء الدين',8)">علاء الدين</th>
+                                <th data-name="ميثاق" class="clickable-name" onclick="showPlayerModal('ميثاق',9)">ميثاق</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matchBody"></tbody>
+                        <tfoot>
+                            <tr class="points-row">
+                                <td colspan="2">نقاط اليوم</td>
+                                <td class="d-pts">0</td><td class="d-pts">0</td><td class="d-pts">0</td><td class="d-pts">0</td><td class="d-pts">0</td><td class="d-pts">0</td><td class="d-pts">0</td><td class="d-pts">0</td><td class="d-pts">0</td><td class="d-pts">0</td>
+                            </tr>
+                            <tr id="rowWeek" class="auto-row">
+                                <td colspan="2">مجموع الأسبوع</td>
+                                <td class="w-pts">0</td><td class="w-pts">0</td><td class="w-pts">0</td><td class="w-pts">0</td><td class="w-pts">0</td><td class="w-pts">0</td><td class="w-pts">0</td><td class="w-pts">0</td><td class="w-pts">0</td><td class="w-pts">0</td>
+                            </tr>
+                            <tr id="rowMonth" class="auto-row">
+                                <td colspan="2">مجموع الشهر</td>
+                                <td class="m-pts">0</td><td class="m-pts">0</td><td class="m-pts">0</td><td class="m-pts">0</td><td class="m-pts">0</td><td class="m-pts">0</td><td class="m-pts">0</td><td class="m-pts">0</td><td class="m-pts">0</td><td class="m-pts">0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <textarea id="historyInput" placeholder="الصق نص نقاط الأسبوع والشهر السابقة هنا للتحديث التلقائي للمجموع ولحساب مؤشرات الصعود والنزول..." oninput="calculateAll()"></textarea>
+            <textarea id="whatsappPredictions" oninput="parsePredictionsText()" placeholder="بمجرد لصق التوقعات هنا، سيتم تحديث الجدول تلقائياً..." style="height: 100px; margin-top: 5px;"></textarea>
+
+            <div class="actions">
+                <button class="btn btn-purple" onclick="generateAndCopyFullDetails(this)">📋 نسخ التفاصيل الكاملة</button>
+                <button class="btn btn-green" onclick="generateAndCopy(this)">📊 نسخ التقرير العام</button>
+                <button class="btn btn-blue" onclick="saveDataToFile()">💾 حفظ ملف احتياطي</button>
+                <button class="btn btn-dark" onclick="document.getElementById('fileInput').click()">📂 استيراد ملف</button>
+                <button class="btn btn-red" onclick="resetTable()">🧹 تصفير النتائج</button>
+                <button class="btn btn-teal" onclick="generateStorySnapshot(this)">📱 ستوري اليوم</button>
+                <button class="btn btn-mvp" onclick="generateMVPSnapshot(this)">🌟 بطاقة MVP</button>
+            </div>
+            <input type="file" id="fileInput" style="display:none" accept=".txt" onchange="importDataFromFile(event)">
+        </div>
+        <button class="btn btn-orange snap-btn" onclick="captureAllLeagues(this)"><span class="snap-icon">📸</span> تصوير الجداول الثلاثة</button>
+
+        <!-- Head-to-Head Section -->
+        
+
+        <div class="live-section league-section" id="dailyLiveSection">
+            <div class="section-header">
+                <h2>🔥 الترتيب اليومي 🔥</h2>
+                <button class="btn btn-blue snap-btn" onclick="takeSnapshot('dailyLiveSection', 'الترتيب_اليومي', this)"><span class="snap-icon">📸</span> تصوير</button>
+            </div>
+            <div class="rankings-container">
+                <div class="ranking-card vet-card" id="cardPremierWeekly">
+                    <h3 class="bg-daily">الترتيب اليومي</h3>
+                    <ul id="liveDaily" class="ranking-list"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="live-section league-section" id="premierSection">
+            <div class="section-header">
+                <h2>🏆 الدوري الممتاز 🏆</h2>
+                <button class="btn btn-blue snap-btn" onclick="takeSnapshot('premierSection', 'الدوري_الممتاز', this)"><span class="snap-icon">📸</span> تصوير</button>
+            </div>
+            <div class="rankings-container">
+                <div class="ranking-card vet-card" id="cardPremierWeekly">
+                    <h3 class="bg-vet-weekly">الترتيب الأسبوعي</h3>
+                    <ul id="premierWeekly" class="ranking-list"></ul>
+                </div>
+                <div class="ranking-card vet-card" id="cardPremierMonthly">
+                    <h3 class="bg-vet-monthly">الترتيب الشهري</h3>
+                    <ul id="premierMonthly" class="ranking-list"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="live-section league-section" id="yellowSection">
+            <div class="section-header">
+                <h2>🎭 دوري محابيط العمل 🎭</h2>
+                <button class="btn btn-blue snap-btn" onclick="takeSnapshot('yellowSection', 'دوري_يلو', this)"><span class="snap-icon">📸</span> تصوير</button>
+            </div>
+            <div class="rankings-container">
+                <div class="ranking-card vet-card" id="cardYellowWeekly">
+                    <h3 class="bg-vet-weekly">الترتيب الأسبوعي</h3>
+                    <ul id="yellowWeekly" class="ranking-list"></ul>
+                </div>
+                <div class="ranking-card vet-card" id="cardYellowMonthly">
+                    <h3 class="bg-vet-monthly">الترتيب الشهري</h3>
+                    <ul id="yellowMonthly" class="ranking-list"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="live-section league-section" id="pairsSection">
+            <div class="section-header">
+                <h2>🤝 دوري الثنائيات 🤝</h2>
+                <button class="btn btn-blue snap-btn" onclick="takeSnapshot('pairsSection', 'دوري_الثنائيات', this)"><span class="snap-icon">📸</span> تصوير</button>
+            </div>
+            <div class="rankings-container">
+                <div class="ranking-card vet-card" id="cardPairsDaily">
+                    <h3 class="bg-vet-daily">الترتيب اليومي</h3>
+                    <ul id="pairsDaily" class="ranking-list"></ul>
+                </div>
+                <div class="ranking-card vet-card" id="cardPairsWeekly">
+                    <h3 class="bg-vet-weekly">الترتيب الأسبوعي</h3>
+                    <ul id="pairsWeekly" class="ranking-list"></ul>
+                </div>
+                <div class="ranking-card vet-card" id="cardPairsMonthly">
+                    <h3 class="bg-vet-monthly">الترتيب الشهري</h3>
+                    <ul id="pairsMonthly" class="ranking-list"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- دوري التوقع العكسي (فكاهي) -->
+        <div class="live-section league-section" id="jokerSection">
+            <div class="section-header">
+                <h2>🃏 دوري التوقع العكسي (قبعة المهرج) 🃏</h2>
+                <button class="btn btn-purple snap-btn" onclick="takeSnapshot('jokerSection', 'دوري_المهرج', this)"><span class="snap-icon">📸</span> تصوير</button>
+            </div>
+            <div class="rankings-container">
+                <div class="ranking-card vet-card" id="cardJoker">
+                    <h3 class="bg-daily">🏅 صاحب أقل النقاط اليوم</h3>
+                    <ul id="jokerList" class="ranking-list"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="live-section league-section " id="statsLiveSection">
+            <div class="section-header">
+                <h2>📊 إحصائيات وأرقام التوقعات 📊</h2>
+                <button class="btn btn-purple snap-btn" onclick="takeSnapshot('statsLiveSection', 'احصائيات_التوقعات', this)"><span class="snap-icon">📸</span> تصوير</button>
+                <button class="btn btn-grey snap-btn copy-stats-btn" onclick="copyStatsText(this)">📋 نسخ البيانات</button>
+            </div>
+            <div class="rankings-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; width: 100%;">
+                <div class="stats-card"><div class="stats-title">🎯 التوقعات المطابقة بالملي</div><div class="stats-data" id="statExact">-</div></div>
+                <div class="stats-card"><div class="stats-title">✅ التوقعات الصحيحة (كمسار)</div><div class="stats-data" id="statOutcome">-</div></div>
+                <div class="stats-card"><div class="stats-title">⚽ الأكثر توقعاً للأهداف</div><div class="stats-data" id="statMostGoals">-</div></div>
+                <div class="stats-card"><div class="stats-title">🛡️ الأقل توقعاً للأهداف</div><div class="stats-data" id="statLeastGoals">-</div></div>
+                <div class="stats-card"><div class="stats-title">🎲 الاعتماد على (2-1 أو 1-2)</div><div class="stats-data" id="stat21">-</div></div>
+                <div class="stats-card"><div class="stats-title">🤝 الأكثر توقعاً للتعادلات</div><div class="stats-data" id="statDraws">-</div></div>
+                <div class="stats-card"><div class="stats-title">👽 التوقعات الفريدة (غرد وحيداً)</div><div class="stats-data" id="statUnique">-</div></div>
+                <div class="stats-card"><div class="stats-title">❌ التوقعات الخاطئة تماماً</div><div class="stats-data" id="statWrong">-</div></div>
+            </div>
+        </div>
+
+        <div id="specialCaptureContainer">
+            <div id="storyContainer" class="story-format" style="display: none;">
+                <h2>🔥 ترتيب اليوم 🔥</h2>
+                <ul class="story-list" id="storyListArea"></ul>
+            </div>
+            <div id="mvpContainer" class="mvp-format" style="display: none;">
+                <div class="mvp-title"> نجم الجولة </div>
+                <div class="mvp-icon">👑</div>
+                <div class="mvp-name" id="mvpNameDisplay">الاسم</div>
+                <div class="mvp-stats">
+                    <div class="stat-box">
+                        <div class="stat-val" id="mvpPtsDisplay">0</div>
+                        <div class="stat-label">نقطة</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-val" id="mvpAccDisplay">0%</div>
+                        <div class="stat-label">دقة توقعات</div>
+                    </div>
+                    <div class="stat-box" id="mvpBadgeArea">
+                        <div class="stat-val">🏆</div>
+                        <div class="stat-label">المركز الأول</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal for player card -->
+        <div class="modal-overlay" id="playerModal">
+            <div class="modal-content">
+                <button class="modal-close" onclick="closePlayerModal()">✕</button>
+                <h3 id="modalPlayerName">بطاقة اللاعب</h3>
+                <div id="modalPlayerContent"></div>
+            </div>
+        </div>
+    </div>
+    <div class="h2h-section" id="h2hSection">
+            <h3>⚔️ مقارنة لاعبين (Head-to-Head)</h3>
+            <div class="h2h-selects">
+                <select id="h2hPlayer1" onchange="updateH2H()">
+                    <option value="">اختر اللاعب الأول</option>
+                </select>
+                <span class="h2h-vs">VS</span>
+                <select id="h2hPlayer2" onchange="updateH2H()">
+                    <option value="">اختر اللاعب الثاني</option>
+                </select>
+            </div>
+            <div id="h2hResult" style="display:none;">
+                <div class="radar-canvas-wrap">
+                    <canvas id="radarCanvas" width="300" height="300"></canvas>
+                </div>
+                <table class="h2h-compare-table" id="h2hTable"></table>
+            </div>
+            <div id="h2hPlaceholder" style="color: var(--text-main); opacity: 0.6; padding: 15px;">اختر لاعبين لعرض المقارنة</div>
+        </div>
+
+        <!-- قسم نقاط المشجعين اليومي -->
+        <div class="live-section league-section" id="fanSection">
+            <div class="section-header">
+                <h2>⚽ نقاط المشجعين – ريال مدريد ⚔️ برشلونة</h2>
+                <button class="btn btn-blue snap-btn" onclick="takeSnapshot('fanSection', 'نقاط_المشجعين', this)"><span class="snap-icon">📸</span> تصوير</button>
+                <button class="btn btn-grey snap-btn copy-stats-btn" onclick="copyFanPointsText(this)">📋 نسخ البيانات</button>
+            </div>
+            <div class="rankings-container">
+                <div class="fan-card" style="background: linear-gradient(135deg, #f1c40f20, #f39c1220); border: 2px solid #f1c40f;">
+                    <div class="fan-team-icon"><img src="https://upload.wikimedia.org/wikipedia/en/thumb/5/56/Real_Madrid_CF.svg/120px-Real_Madrid_CF.svg.png" alt="ريال مدريد" style="height:50px;"></div>
+                    <h3 style="color:#f1c40f; margin:0;">ريال مدريد</h3>
+                    <div class="fan-points" id="rmPoints" style="color:#f1c40f;">0</div>
+                    <div style="font-size:0.8rem; opacity:0.8;">أحمد العودي · صدام · محمد الجرافي · علاء · عبدالرحمن</div>
+                </div>
+                <div class="fan-card" style="background: linear-gradient(135deg, #a5004420, #c0392b20); border: 2px solid #a50044;">
+                    <div class="fan-team-icon"><img src="https://upload.wikimedia.org/wikipedia/en/thumb/4/47/FC_Barcelona_%28crest%29.svg/120px-FC_Barcelona_%28crest%29.svg.png" alt="برشلونة" style="height:50px;"></div>
+                    <h3 style="color:#a50044; margin:0;">برشلونة</h3>
+                    <div class="fan-points" id="barcaPoints" style="color:#a50044;">0</div>
+                    <div style="font-size:0.8rem; opacity:0.8;">محمد الذبحاني · نبيل · وحيد · رشيد · ميثاق</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- قسم نقاط المشجعين الأسبوعي -->
+        <div class="live-section league-section" id="fanWeekSection">
+            <div class="section-header">
+                <h2>⚽ نقاط المشجعين الأسبوعية – ريال مدريد ⚔️ برشلونة</h2>
+                <button class="btn btn-blue snap-btn" onclick="takeSnapshot('fanWeekSection', 'نقاط_المشجعين_اسبوعي', this)"><span class="snap-icon">📸</span> تصوير</button>
+                <button class="btn btn-grey snap-btn copy-stats-btn" onclick="copyFanWeekPointsText(this)">📋 نسخ البيانات</button>
+            </div>
+            <div class="rankings-container">
+                <div class="fan-card" style="background: linear-gradient(135deg, #f1c40f20, #f39c1220); border: 2px solid #f1c40f;">
+                    <div class="fan-team-icon"><img src="https://upload.wikimedia.org/wikipedia/en/thumb/5/56/Real_Madrid_CF.svg/120px-Real_Madrid_CF.svg.png" alt="ريال مدريد" style="height:50px;"></div>
+                    <h3 style="color:#f1c40f; margin:0;">ريال مدريد</h3>
+                    <div class="fan-points" id="rmWeekPoints" style="color:#f1c40f;">0</div>
+                </div>
+                <div class="fan-card" style="background: linear-gradient(135deg, #a5004420, #c0392b20); border: 2px solid #a50044;">
+                    <div class="fan-team-icon"><img src="https://upload.wikimedia.org/wikipedia/en/thumb/4/47/FC_Barcelona_%28crest%29.svg/120px-FC_Barcelona_%28crest%29.svg.png" alt="برشلونة" style="height:50px;"></div>
+                    <h3 style="color:#a50044; margin:0;">برشلونة</h3>
+                    <div class="fan-points" id="barcaWeekPoints" style="color:#a50044;">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- قسم نقاط المشجعين الشهري -->
+        <div class="live-section league-section" id="fanMonthSection">
+            <div class="section-header">
+                <h2>⚽ نقاط المشجعين الشهرية – ريال مدريد ⚔️ برشلونة</h2>
+                <button class="btn btn-blue snap-btn" onclick="takeSnapshot('fanMonthSection', 'نقاط_المشجعين_شهري', this)"><span class="snap-icon">📸</span> تصوير</button>
+                <button class="btn btn-grey snap-btn copy-stats-btn" onclick="copyFanMonthPointsText(this)">📋 نسخ البيانات</button>
+            </div>
+            <div class="rankings-container">
+                <div class="fan-card" style="background: linear-gradient(135deg, #f1c40f20, #f39c1220); border: 2px solid #f1c40f;">
+                    <div class="fan-team-icon"><img src="https://upload.wikimedia.org/wikipedia/en/thumb/5/56/Real_Madrid_CF.svg/120px-Real_Madrid_CF.svg.png" alt="ريال مدريد" style="height:50px;"></div>
+                    <h3 style="color:#f1c40f; margin:0;">ريال مدريد</h3>
+                    <div class="fan-points" id="rmMonthPoints" style="color:#f1c40f;">0</div>
+                </div>
+                <div class="fan-card" style="background: linear-gradient(135deg, #a5004420, #c0392b20); border: 2px solid #a50044;">
+                    <div class="fan-team-icon"><img src="https://upload.wikimedia.org/wikipedia/en/thumb/4/47/FC_Barcelona_%28crest%29.svg/120px-FC_Barcelona_%28crest%29.svg.png" alt="برشلونة" style="height:50px;"></div>
+                    <h3 style="color:#a50044; margin:0;">برشلونة</h3>
+                    <div class="fan-points" id="barcaMonthPoints" style="color:#a50044;">0</div>
+                </div>
+            </div>
+        </div>
+    <script>
+        const predictorNames = ["أحمد العودي", "نبيل الهمداني", "محمد الذبحاني", "رشيد الغزالي", "صدام المرشحي", "وحيد القابل", "محمد الجرافي",
+            "عبد الرحمن", "علاء الدين", "ميثاق"
+        ];
+        const veteranNames = ["أحمد العودي", "نبيل الهمداني", "محمد الذبحاني", "رشيد الغزالي", "صدام المرشحي", "وحيد القابل", "محمد الجرافي",
+            "عبد الرحمن", "علاء الدين", "ميثاق"
+        ];
+
+        // تعريف مشجعي الفريقين
+        const rmFansIndices = [0, 4, 6, 8, 7]; // أحمد, صدام, محمد الجرافي, علاء, عبدالرحمن
+        const barcaFansIndices = [2, 1, 5, 3, 9]; // محمد الذبحاني, نبيل, وحيد, رشيد, ميثاق
+
+        let matchesData = [
+            { name: "الاخدود × الاتفاق", preds: [" 1 - 2 ", " 1 - 1 ", " 1 - 2 ", " 2 - 1 ", " 1 - 3 ", " 0 - 2 ", " 1 - 2 ", " 1 - 3 ",
+                    " 0 - 1 ", " 0 - 3 "
+                ] },
+            { name: "الخلود × الفيحاء", preds: [" 1 - 1 ", " 1 - 2 ", " 2 - 1 ", " 1 - 3 ", " 2 - 1 ", " 1 - 1 ", " 3 - 1 ", " 2 - 1 ",
+                    " 2 - 1 ", " 1 - 1 "
+                ] },
+            { name: "سبورتينغ براغا × فرايبورج", preds: [" 2 - 1 ", " 1 - 0 ", " 2 - 1 ", " 2 - 1 ", " 1 - 1 ", " 1 - 3 ", " 2 - 2 ",
+                    " 2 - 0 ", " 1 - 1 ", " 2 - 1 "
+                ] },
+            { name: "نوتينغهام × أستون فيلا", preds: [" 1 - 2 ", " 1 - 2 ", " 1 - 2 ", " 1 - 2 ", " 1 - 3 ", " 1 - 3 ", " 2 - 3 ",
+                    " 1 - 3 ", " 0 - 2 ", " 1 - 3 "
+                ] },
+            { name: "شاختار × كريستال بالاس", preds: [" 1 - 1 ", " 1 - 1 ", " 2 - 1 ", " 1 - 2 ", " 1 - 3 ", " 3 - 1 ", " 1 - 3 ",
+                    " 2 - 0 ", " 2 - 1 ", " 1 - 0 "
+                ] },
+            { name: "رايو فاليكانو × ستراسبورغ", preds: [" 2 - 1 ", " 2 - 1 ", " 1 - 1 ", " 0 - 2 ", " 3 - 1 ", " 1 - 2 ", " 1 - 2 ",
+                    " 3 - 1 ", " 1 - 1 ", " 2 - 1 "
+                ] }
+        ];
+
+        let actualScores = matchesData.map(() => ({ h: null, a: null }));
+        const tbody = document.getElementById('matchBody');
+        let isAnonymous = false;
+        let anonymousMap = {};
+        let statsReportData = "";
+        let previousDailyLeader = null;
+        let liveModeInterval = null;
+        let dailyPerfectBadgePlayer = null;
+        let playerBadges = {};
+        let weeklyLeader = null;
+        let monthlyLeader = null;
+        let fanPointsText = ""; // نص نقاط المشجعين اليومي
+        let fanWeekText = "";   // نص نقاط المشجعين الأسبوعي
+        let fanMonthText = "";  // نص نقاط المشجعين الشهري
+
+        const pairs = [
+            { label: "أحمد العودي ورشيد الغزالي", indices: [0, 3] },
+            { label: "محمد الجرافي وميثاق", indices: [6, 9] },
+            { label: "محمد الذبحاني وصدام المرشحي", indices: [2, 4] },
+            { label: "وحيد القابل ونبيل الهمداني", indices: [5, 1] },
+            { label: "علاء الدين وعبدالرحمن", indices: [8, 7] }
+        ];
+
+        function populateH2HSelects() {
+            const s1 = document.getElementById('h2hPlayer1');
+            const s2 = document.getElementById('h2hPlayer2');
+            s1.innerHTML = '<option value="">اختر اللاعب الأول</option>';
+            s2.innerHTML = '<option value="">اختر اللاعب الثاني</option>';
+            predictorNames.forEach((name, i) => {
+                const disp = getDisplayName(name);
+                s1.innerHTML += `<option value="${i}">${disp}</option>`;
+                s2.innerHTML += `<option value="${i}">${disp}</option>`;
+            });
+        }
+
+        function parsePredictionsText() {
+            const rawText = document.getElementById('whatsappPredictions').value;
+            if (!rawText.trim()) return;
+
+            const lines = rawText.split('\n');
+            let detectedMatchesCount = 0;
+            lines.forEach(line => {
+                const orderMatch = line.match(/^[\s\u200B]*(\d+)\s*-/);
+                if (orderMatch) {
+                    const num = parseInt(orderMatch[1]);
+                    if (num > detectedMatchesCount) detectedMatchesCount = num;
+                }
+            });
+            if (detectedMatchesCount === 0) return;
+
+            matchesData = [];
+            actualScores = [];
+            for (let i = 0; i < detectedMatchesCount; i++) {
+                matchesData.push({ name: `مباراة ${i + 1}`, preds: new Array(predictorNames.length).fill("") });
+                actualScores.push({ h: null, a: null });
+            }
+
+            let currentPlayerIndex = -1;
+            const normalize = (text) => text.replace(/[أإآا]/g, 'ا').replace(/\s+/g, ' ').trim();
+            const normalizedPredictors = predictorNames.map(name => normalize(name).replace('عبد الرحمن',
+            'عبدالرحمن'));
+
+            lines.forEach(line => {
+                let cleanLine = line.trim();
+                if (!cleanLine) return;
+
+                if (cleanLine.includes("اسم المتوقع")) {
+                    let extractedName = cleanLine.split(':')[1];
+                    if (extractedName) {
+                        extractedName = normalize(extractedName.replace(
+                            /[\uD800-\uDBFF][\uDC00-\uDFFF]|\uD83C[\uDF00-\uDFFF]|\uD83D[\uDC00-\uDE4F]/g, ''));
+                        currentPlayerIndex = normalizedPredictors.findIndex(p => extractedName.includes(p) || p
+                            .includes(extractedName));
+                    }
+                    return;
+                }
+
+                const matchPattern = /\{\s*(\d+)\s*\}\s*❌\s*\{\s*(\d+)\s*\}/;
+                const scoreMatch = cleanLine.match(matchPattern);
+                if (scoreMatch) {
+                    const orderMatch = cleanLine.match(/^[\s\u200B]*(\d+)\s*-/);
+                    if (orderMatch) {
+                        let orderIdx = parseInt(orderMatch[1]) - 1;
+                        if (orderIdx >= 0 && orderIdx < matchesData.length) {
+                            let matchNamePart = cleanLine.split('{')[0].replace(/^\d+\s*-\s*/, '').trim();
+                            let team2Part = cleanLine.split('}').pop().trim();
+                            matchesData[orderIdx].name = `${matchNamePart} × ${team2Part}`;
+                            if (currentPlayerIndex !== -1) {
+                                matchesData[orderIdx].preds[currentPlayerIndex] =
+                                    `${scoreMatch[1]} - ${scoreMatch[2]}`;
+                            }
+                        }
+                    }
+                }
+            });
+            initTable();
+        }
+
+        function toggleAnonymous() {
+            isAnonymous = !isAnonymous;
+            const btn = document.getElementById('btnAnonymize');
+            if (isAnonymous) {
+                btn.innerHTML = '👁️ كشف الأسماء الحقيقية';
+                btn.classList.replace('btn-dark', 'btn-red');
+                let nums = Array.from({ length: predictorNames.length }, (_, i) => i + 1);
+                nums.sort(() => Math.random() - 0.5);
+                anonymousMap = {};
+                predictorNames.forEach((name, i) => { anonymousMap[name] = ` ${nums[i]}`; });
+            } else {
+                btn.innerHTML = '🥷 تشفير الأسماء';
+                btn.classList.replace('btn-red', 'btn-dark');
+            }
+            populateH2HSelects();
+            updateNamesDisplay();
+        }
+
+        function getDisplayName(realName) {
+            return isAnonymous ? (anonymousMap[realName] || realName) : realName;
+        }
+
+        function toggleTheme() {
+            document.body.className = document.body.classList.contains('dark-mode') ? '' : 'dark-mode';
+        }
+
+        function setTheme(theme) {
+            document.body.className = '';
+            if (theme !== 'default') {
+                document.body.classList.add(`theme-${theme}`);
+            }
+        }
+
+        function toggleLiveMode() {
+            const btn = document.getElementById('btnLiveMode');
+            if (document.body.classList.contains('live-mode')) {
+                document.body.classList.remove('live-mode');
+                btn.classList.remove('active-live');
+                btn.innerHTML = '📺';
+                btn.title = 'وضع العرض الحي';
+                if (liveModeInterval) { clearInterval(liveModeInterval);
+                    liveModeInterval = null; }
+            } else {
+                document.body.classList.add('live-mode');
+                btn.classList.add('active-live');
+                btn.innerHTML = '🔄';
+                btn.title = 'إيقاف العرض الحي';
+                liveModeInterval = setInterval(() => {
+                    calculateAll();
+                }, 30000);
+            }
+        }
+
+        function calculateAccuracy() {
+            let stats = predictorNames.map(() => ({ played: 0, correct: 0 }));
+            matchesData.forEach((match, mIdx) => {
+                let resH = actualScores[mIdx].h;
+                let resA = actualScores[mIdx].a;
+                if (resH === null || resA === null) return;
+                let actualDiff = resH - resA;
+                let actualOutcome = actualDiff > 0 ? 'H' : (actualDiff < 0 ? 'A' : 'D');
+                match.preds.forEach((p, pIdx) => {
+                    stats[pIdx].played++;
+                    let parts = p.trim().split(/ - /).map(n => parseInt(n));
+                    let predH = parts[0],
+                        predA = parts[1];
+                    let predDiff = predH - predA;
+                    let predOutcome = predDiff > 0 ? 'H' : (predDiff < 0 ? 'A' : 'D');
+                    if ((resH === predH && resA === predA) || actualOutcome === predOutcome) {
+                        stats[pIdx].correct++;
+                    }
+                });
+            });
+            return stats.map(s => s.played > 0 ? Math.round((s.correct / s.played) * 100) : 0);
+        }
+
+        function updateNamesDisplay() {
+            calculateAll();
+        }
+
+        function getResultIcon(h, a) {
+            if (h === null || a === null) return '';
+            if (h > a) return ' ⚽';
+            if (h < a) return ' 🏳️';
+            return ' 🤝';
+        }
+
+        async function takeSnapshot(elementId, fileName, btnElement) {
+            const ready = await ensureHtml2canvas();
+            if (!ready) {
+                alert("❌ خطأ: لم يتم تحميل مكتبة التصوير. يرجى التأكد من اتصالك بالإنترنت أو تحديث الصفحة.");
+                return;
+            }
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            const originalText = btnElement.innerHTML;
+            btnElement.innerHTML = "⏳ جاري التصوير...";
+            btnElement.disabled = true;
+            const buttonsToHide = el.querySelectorAll('button');
+            const originalDisplays = [];
+            buttonsToHide.forEach(b => {
+                originalDisplays.push(b.style.display);
+                b.style.display = 'none';
+            });
+            try {
+                await new Promise(resolve => setTimeout(resolve, 150));
+                const canvas = await html2canvas(el, { scale: 2, useCORS: true, scrollY: -window.scrollY,
+                    backgroundColor: null });
+                const link = document.createElement('a');
+                const dateStr = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+                link.download = `${fileName}_${dateStr}.png`;
+                link.href = canvas.toDataURL('image/png', 1.0);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                alert("❌ حدث خطأ أثناء التصوير: " + (error.message || "يرجى المحاولة مرة أخرى."));
+            } finally {
+                buttonsToHide.forEach((b, i) => { b.style.display = originalDisplays[i]; });
+                btnElement.innerHTML = originalText;
+                btnElement.disabled = false;
+            }
+        }
+
+        async function captureHiddenElement(elementId, fileName, btnElement) {
+            const ready = await ensureHtml2canvas();
+            if (!ready) { alert("❌ خطأ: لم يتم تحميل مكتبة التصوير."); return; }
+            const el = document.getElementById(elementId);
+            const container = document.getElementById('specialCaptureContainer');
+            const originalText = btnElement.innerHTML;
+            btnElement.innerHTML = "⏳ جاري التصميم...";
+            btnElement.disabled = true;
+            el.style.display = 'flex';
+            container.style.top = '0';
+            container.style.left = '0';
+            try {
+                await new Promise(r => setTimeout(r, 200));
+                const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: null });
+                const link = document.createElement('a');
+                link.download = `${fileName}.png`;
+                link.href = canvas.toDataURL('image/png', 1.0);
+                link.click();
+            } catch (err) {
+                alert("حدث خطأ أثناء الإنشاء");
+            } finally {
+                el.style.display = 'none';
+                container.style.top = '-9999px';
+                container.style.left = '-9999px';
+                btnElement.innerHTML = originalText;
+                btnElement.disabled = false;
+            }
+        }
+
+        async function generateStorySnapshot(btn) {
+            const storyArea = document.getElementById('storyListArea');
+            storyArea.innerHTML = '';
+            const listItems = document.querySelectorAll('#liveDaily li');
+            if (listItems.length === 0) { alert("لا توجد بيانات بعد!");
+                return; }
+            let count = 0;
+            listItems.forEach(li => {
+                if (count >= 10) return;
+                let textSpan = li.querySelector('span').innerText.trim();
+                let ptsSpan = li.querySelectorAll('span')[li.querySelectorAll('span').length - 1].innerText;
+                let parts = textSpan.split(' ');
+                let rank = parts[0];
+                let name = parts.slice(1).join(' ').replace(/[▲▼]/g, '').replace(/[🎯🦊⚽🤝🚀👑🃏]/g, '').trim();
+                let itemHTML = `
+                <li class="story-item">
+                    <div style="display:flex; align-items:center;">
+                        <span class="story-rank">${rank}</span>
+                        <span>${name}</span>
+                    </div>
+                    <span class="story-pts">${ptsSpan}</span>
+                </li>`;
+                storyArea.innerHTML += itemHTML;
+                count++;
+            });
+            await captureHiddenElement('storyContainer', 'ستوري_التوقعات', btn);
+        }
+
+        async function generateMVPSnapshot(btn) {
+            const dPtsCells = document.querySelectorAll('.d-pts');
+            let bestIdx = -1,
+                maxPts = -1;
+            predictorNames.forEach((name, i) => {
+                let pts = parseInt(dPtsCells[i].firstChild.textContent) || 0;
+                if (pts > maxPts) { maxPts = pts;
+                    bestIdx = i; }
+            });
+            if (maxPts === 0) { alert("الجميع نقاطهم صفر. بانتظار النتائج!");
+                return; }
+            document.getElementById('mvpNameDisplay').innerText = getDisplayName(predictorNames[bestIdx]);
+            document.getElementById('mvpPtsDisplay').innerText = maxPts;
+            let accData = calculateAccuracy();
+            document.getElementById('mvpAccDisplay').innerText = accData[bestIdx] + "%";
+            await captureHiddenElement('mvpContainer', 'بطاقة_نجم_الجولة', btn);
+        }
+
+        function initTable() {
+    tbody.innerHTML = "";
+    matchesData.forEach((match, mIdx) => {
+        let resH = actualScores[mIdx].h;
+        let resA = actualScores[mIdx].a;
+        let hC = 0, dC = 0, aC = 0;
+        match.preds.forEach(p => {
+            let parts = p.trim().split(/ - /).map(n => parseInt(n));
+            if (parts[0] > parts[1]) hC++;
+            else if (parts[0] < parts[1]) aC++;
+            else dC++;
+        });
+        let tot = match.preds.length;
+        let hp = Math.round((hC / tot) * 100),
+            dp = Math.round((dC / tot) * 100),
+            ap = Math.round((aC / tot) * 100);
+        let distHTML = `
+        <div class="dist-wrap">
+            <div class="dist-bar">
+                <div class="dist-h" style="width:${hp}%" title="فوز المضيف"></div>
+                <div class="dist-d" style="width:${dp}%" title="تعادل"></div>
+                <div class="dist-a" style="width:${ap}%" title="فوز الضيف"></div>
+            </div>
+            <div class="dist-text"><span>${hp}%</span><span>${dp}%</span><span>${ap}%</span></div>
+        </div>`;
+
+        let row = `<tr>
+            <td class="match-label">${match.name} ${distHTML}</td>
+            <td class="actual-result-cell">
+                <span class="score-btn ${resH !== null ? 'is-active' : ''}" 
+                      id="btn-h-${mIdx}" 
+                      onclick="changeScore(${mIdx}, 'h')">${resH !== null ? resH : '-'}</span>
+                <span style="display:inline-block; vertical-align:middle; font-weight:bold; margin:0 4px;">-</span>
+                <span class="score-btn ${resA !== null ? 'is-active' : ''}" 
+                      id="btn-a-${mIdx}" 
+                      onclick="changeScore(${mIdx}, 'a')">${resA !== null ? resA : '-'}</span>
+            </td>`;
+        match.preds.forEach(p => row += `<td>${p}</td>`);
+        row += `</tr>`;
+        tbody.innerHTML += row;
+    });
+    populateH2HSelects();
+    calculateAll();
+}
+        function changeScore(mIdx, side) {
+            let current = actualScores[mIdx][side];
+            let next = (current === null) ? 0 : (current + 1) % 10;
+            actualScores[mIdx][side] = next;
+            const btnEl = document.getElementById(`btn-${side}-${mIdx}`);
+            btnEl.innerText = next;
+            btnEl.classList.add('is-active');
+            const cell = btnEl.parentElement;
+            
+            
+            
+            calculateAll();
+        }
+
+        function computePlayerStats() {
+            let exactCounts = new Array(predictorNames.length).fill(0);
+            let correctCounts = new Array(predictorNames.length).fill(0);
+            let goalDiffs = new Array(predictorNames.length).fill(0);
+            let actualTotalGoals = 0;
+            for (let mIdx = 0; mIdx < matchesData.length; mIdx++) {
+                let resH = actualScores[mIdx].h;
+                let resA = actualScores[mIdx].a;
+                if (resH === null || resA === null) continue;
+                actualTotalGoals += resH + resA;
+            }
+            for (let mIdx = 0; mIdx < matchesData.length; mIdx++) {
+                let resH = actualScores[mIdx].h;
+                let resA = actualScores[mIdx].a;
+                if (resH === null || resA === null) continue;
+                let actualDiff = resH - resA;
+                let actualOutcome = actualDiff > 0 ? 'H' : (actualDiff < 0 ? 'A' : 'D');
+                matchesData[mIdx].preds.forEach((p, pIdx) => {
+                    let parts = p.trim().split(/ - /).map(n => parseInt(n));
+                    let predH = parts[0],
+                        predA = parts[1];
+                    let predOutcome = (predH - predA) > 0 ? 'H' : ((predH - predA) < 0 ? 'A' : 'D');
+                    if (resH === predH && resA === predA) {
+                        exactCounts[pIdx]++;
+                        correctCounts[pIdx]++;
+                    } else if (actualOutcome === predOutcome) {
+                        correctCounts[pIdx]++;
+                    }
+                });
+            }
+            predictorNames.forEach((name, pIdx) => {
+                let playerTotalGoals = 0;
+                matchesData.forEach((match, mIdx) => {
+                    if (actualScores[mIdx].h !== null && actualScores[mIdx].a !== null) {
+                        let parts = match.preds[pIdx].trim().split(/ - /).map(n => parseInt(n));
+                        playerTotalGoals += parts[0] + parts[1];
+                    }
+                });
+                goalDiffs[pIdx] = Math.abs(playerTotalGoals - actualTotalGoals);
+            });
+            return { exactCounts, correctCounts, goalDiffs, actualTotalGoals };
+        }
+
+        function computeBadges(dailyTotals, exactCounts, correctCounts, goalDiffs, actualTotalGoals, prevRankMap) {
+            let badges = predictorNames.map(() => []);
+            const numMatches = matchesData.length;
+
+            let maxExact = Math.max(...exactCounts);
+            if (maxExact > 0) {
+                let candidates = [];
+                exactCounts.forEach((c, i) => { if (c === maxExact) candidates.push(i); });
+                let bestIdx = candidates[0];
+                let bestPts = dailyTotals[bestIdx];
+                candidates.forEach(i => { if (dailyTotals[i] > bestPts) { bestPts = dailyTotals[i];
+                        bestIdx = i; } });
+                badges[bestIdx].push('🎯');
+            }
+
+            let uniqueCorrectCounts = new Array(predictorNames.length).fill(0);
+            matchesData.forEach((match, mIdx) => {
+                let resH = actualScores[mIdx].h;
+                let resA = actualScores[mIdx].a;
+                if (resH === null || resA === null) return;
+                let actualDiff = resH - resA;
+                let actualOutcome = actualDiff > 0 ? 'H' : (actualDiff < 0 ? 'A' : 'D');
+                let correctPlayers = [];
+                match.preds.forEach((p, pIdx) => {
+                    let parts = p.trim().split(/ - /).map(n => parseInt(n));
+                    let predOutcome = (parts[0] - parts[1]) > 0 ? 'H' : ((parts[0] - parts[1]) < 0 ? 'A' :
+                        'D');
+                    if (actualOutcome === predOutcome && !(resH === parts[0] && resA === parts[1])) {
+                        correctPlayers.push(pIdx);
+                    }
+                });
+                if (correctPlayers.length === 1) {
+                    uniqueCorrectCounts[correctPlayers[0]]++;
+                }
+            });
+            let maxUniqueCorrect = Math.max(...uniqueCorrectCounts);
+            if (maxUniqueCorrect > 0) {
+                let candidates = [];
+                uniqueCorrectCounts.forEach((c, i) => { if (c === maxUniqueCorrect) candidates.push(i); });
+                let bestIdx = candidates[0];
+                let bestPts = dailyTotals[bestIdx];
+                candidates.forEach(i => { if (dailyTotals[i] > bestPts) { bestPts = dailyTotals[i];
+                        bestIdx = i; } });
+                badges[bestIdx].push('🦊');
+            }
+
+            let minDiff = Math.min(...goalDiffs);
+            goalDiffs.forEach((d, i) => { if (d === minDiff) badges[i].push('⚽'); });
+
+            let drawCorrectCounts = new Array(predictorNames.length).fill(0);
+            matchesData.forEach((match, mIdx) => {
+                let resH = actualScores[mIdx].h;
+                let resA = actualScores[mIdx].a;
+                if (resH === null || resA === null) return;
+                if (resH !== resA) return;
+                match.preds.forEach((p, pIdx) => {
+                    let parts = p.trim().split(/ - /).map(n => parseInt(n));
+                    if (parts[0] === parts[1] && parts[0] === resH) {
+                        drawCorrectCounts[pIdx]++;
+                    }
+                });
+            });
+            let maxDrawCorrect = Math.max(...drawCorrectCounts);
+            if (maxDrawCorrect > 0) {
+                drawCorrectCounts.forEach((c, i) => { if (c === maxDrawCorrect) badges[i].push('🤝'); });
+            }
+
+            if (prevRankMap) {
+                let bestClimb = -Infinity;
+                let bestClimberIdx = -1;
+                predictorNames.forEach((name, i) => {
+                    let disp = getDisplayName(name);
+                    if (prevRankMap[disp] !== undefined) {
+                        let currentRank = dailyTotals.map((_, j) => j).sort((a, b) => dailyTotals[b] - dailyTotals[a])
+                            .indexOf(i);
+                        let climb = prevRankMap[disp] - currentRank;
+                        if (climb > bestClimb) { bestClimb = climb;
+                            bestClimberIdx = i; }
+                    }
+                });
+                if (bestClimb >= 2 && bestClimberIdx >= 0) {
+                    badges[bestClimberIdx].push('🚀');
+                }
+            }
+
+            dailyPerfectBadgePlayer = null;
+            predictorNames.forEach((name, i) => {
+                let playedCount = 0;
+                matchesData.forEach((m, mi) => {
+                    if (actualScores[mi].h !== null && actualScores[mi].a !== null) playedCount++;
+                });
+                if (playedCount > 0 && exactCounts[i] / playedCount >= 0.8 && exactCounts[i] >= 2) {
+                    dailyPerfectBadgePlayer = i;
+                    badges[i].push('🌟');
+                }
+            });
+
+            return badges;
+        }
+
+        function updateFanWeekMonthPoints(wTotals, mTotals, hasWeek, hasMonth) {
+            if (hasWeek && wTotals) {
+                let rmW = 0;
+                let barcaW = 0;
+                rmFansIndices.forEach(i => rmW += wTotals[i] || 0);
+                barcaFansIndices.forEach(i => barcaW += wTotals[i] || 0);
+                document.getElementById('rmWeekPoints').innerText = rmW;
+                document.getElementById('barcaWeekPoints').innerText = barcaW;
+                fanWeekText = `⚽ نقاط المشجعين الأسبوعية:\n⚪ ريال مدريد: ${rmW} نقطة\n🔵 برشلونة: ${barcaW} نقطة`;
+                if (rmW > barcaW) fanWeekText += `\n✅ ريال مدريد يتقدم أسبوعياً!`;
+                else if (barcaW > rmW) fanWeekText += `\n✅ برشلونة يتقدم أسبوعياً!`;
+                else fanWeekText += `\n🤝 تعادل أسبوعي!`;
+            } else {
+                document.getElementById('rmWeekPoints').innerText = '0';
+                document.getElementById('barcaWeekPoints').innerText = '0';
+                fanWeekText = '';
+            }
+            if (hasMonth && mTotals) {
+                let rmM = 0;
+                let barcaM = 0;
+                rmFansIndices.forEach(i => rmM += mTotals[i] || 0);
+                barcaFansIndices.forEach(i => barcaM += mTotals[i] || 0);
+                document.getElementById('rmMonthPoints').innerText = rmM;
+                document.getElementById('barcaMonthPoints').innerText = barcaM;
+                fanMonthText = `⚽ نقاط المشجعين الشهرية:\n⚪ ريال مدريد: ${rmM} نقطة\n🔵 برشلونة: ${barcaM} نقطة`;
+                if (rmM > barcaM) fanMonthText += `\n✅ ريال مدريد يتقدم شهرياً!`;
+                else if (barcaM > rmM) fanMonthText += `\n✅ برشلونة يتقدم شهرياً!`;
+                else fanMonthText += `\n🤝 تعادل شهري!`;
+            } else {
+                document.getElementById('rmMonthPoints').innerText = '0';
+                document.getElementById('barcaMonthPoints').innerText = '0';
+                fanMonthText = '';
+            }
+        }
+
+        function copyFanWeekPointsText(btnElement) {
+            copyToClipboard(fanWeekText, btnElement);
+        }
+        function copyFanMonthPointsText(btnElement) {
+            copyToClipboard(fanMonthText, btnElement);
+        }
+
+        function calculateAll() {
+            const rows = tbody.rows;
+            let dailyTotals = new Array(predictorNames.length).fill(0);
+            let exactCountsRaw = new Array(predictorNames.length).fill(0);
+            let outcomeCountsRaw = new Array(predictorNames.length).fill(0);
+            for (let i = 0; i < rows.length; i++) {
+                let resH = actualScores[i].h;
+                let resA = actualScores[i].a;
+                if (resH === null || resA === null) continue;
+                let resDiff = resH - resA;
+                let actualOutcome = resDiff > 0 ? 'H' : (resDiff < 0 ? 'A' : 'D');
+                let isSpecialMatchResult = (resH === 2 && resA === 1) || (resH === 1 && resA === 2);
+                let outcomeCounts = { 'H': 0, 'D': 0, 'A': 0 };
+                let playerOutcomes = [];
+                matchesData[i].preds.forEach(p => {
+                    let parts = p.trim().split(/ - /).map(n => parseInt(n));
+                    let diff = parts[0] - parts[1];
+                    let out = diff > 0 ? 'H' : (diff < 0 ? 'A' : 'D');
+                    playerOutcomes.push(out);
+                    outcomeCounts[out]++;
+                });
+                for (let j = 0; j < predictorNames.length; j++) {
+                    let cell = rows[i].cells[j + 2];
+                    if (!cell) continue;
+                    cell.className = "";
+                    let predStr = matchesData[i].preds[j].trim();
+                    let predNums = predStr.split(/ - /).map(n => parseInt(n));
+                    let predH = predNums[0],
+                        predA = predNums[1];
+                    let predOutcome = playerOutcomes[j];
+                    let pointsToAdd = 0;
+                    if (resH === predH && resA === predA) {
+                        pointsToAdd = isSpecialMatchResult ? 2 : 3;
+                        if (!isSpecialMatchResult && outcomeCounts[actualOutcome] === 1) {
+                            pointsToAdd += 1;
+                        }
+                        exactCountsRaw[j]++;
+                        outcomeCountsRaw[j]++;
+                        cell.classList.add('state-exact');
+                    } else if (actualOutcome === predOutcome) {
+                        pointsToAdd = 1;
+                        if (outcomeCounts[actualOutcome] === 1) {
+                            pointsToAdd += 1;
+                        }
+                        outcomeCountsRaw[j]++;
+                        cell.classList.add('state-outcome');
+                    } else {
+                        cell.classList.add('state-wrong');
+                    }
+                    dailyTotals[j] += pointsToAdd;
+                }
+            }
+
+            let playedCountTotal = 0;
+            matchesData.forEach((m, mi) => { if (actualScores[mi].h !== null && actualScores[mi].a !== null)
+                playedCountTotal++; });
+            let perfectBonusPlayer = null;
+            predictorNames.forEach((name, i) => {
+                if (playedCountTotal > 0 && exactCountsRaw[i] / playedCountTotal >= 0.8 && exactCountsRaw[i] >= 2) {
+                    dailyTotals[i] += 5;
+                    perfectBonusPlayer = i;
+                }
+            });
+            dailyPerfectBadgePlayer = perfectBonusPlayer;
+
+            document.querySelectorAll('.d-pts').forEach((td, i) => {
+                const disp = getDisplayName(predictorNames[i]);
+                let badgeStr = '';
+                if (playerBadges[i] && playerBadges[i].length > 0) {
+                    badgeStr = ' ' + playerBadges[i].map(b =>
+                        `<span class="badge-icon" title="${getBadgeTitle(b)}">${b}</span>`).join('');
+                }
+                td.innerHTML =
+                    `${dailyTotals[i]} <span class="sub-name">${disp}${badgeStr}</span>`;
+            });
+
+            let accuracyData = calculateAccuracy();
+            const ths = document.querySelectorAll('th[data-name]');
+            ths.forEach((th, i) => {
+                let realName = th.getAttribute('data-name');
+                let dispName = getDisplayName(realName);
+                let crownHTML = '';
+                if (weeklyLeader === realName || monthlyLeader === realName) {
+                    crownHTML = ' <span class="crown-icon">👑</span>';
+                }
+                let badgeHTML = '';
+                if (playerBadges[i] && playerBadges[i].length > 0) {
+                    badgeHTML = ' ' + playerBadges[i].map(b =>
+                        `<span class="badge-icon" title="${getBadgeTitle(b)}">${b}</span>`).join('');
+                }
+                th.innerHTML =
+                    `${dispName}${crownHTML}${badgeHTML} <br><span style="font-size:0.75rem; color:var(--accent); font-weight:normal;" title="مؤشر الدقة">${accuracyData[i]}%</span>`;
+                th.setAttribute('onclick', `showPlayerModal('${realName.replace(/'/g, "\\'")}',${i})`);
+            });
+
+            if (playedCountTotal > 0) {
+                let sortedToday = [...dailyTotals].sort((a, b) => b - a);
+                let maxPts = sortedToday[0];
+                let newLeaderIdx = dailyTotals.indexOf(maxPts);
+                let newLeaderName = getDisplayName(predictorNames[newLeaderIdx]);
+                if (previousDailyLeader !== null && previousDailyLeader !== newLeaderName && maxPts > 0) {
+                    fireConfetti();
+                }
+                if (maxPts > 0) {
+                    previousDailyLeader = newLeaderName;
+                }
+            }
+
+            updateFanPoints(dailyTotals);
+            updateHistory(dailyTotals);
+            calculateStats();
+            updateH2H();
+            populateH2HSelects();
+        }
+
+        function updateFanPoints(dailyTotals) {
+            let rmTotal = 0;
+            let barcaTotal = 0;
+            rmFansIndices.forEach(i => { rmTotal += dailyTotals[i]; });
+            barcaFansIndices.forEach(i => { barcaTotal += dailyTotals[i]; });
+            document.getElementById('rmPoints').innerText = rmTotal;
+            document.getElementById('barcaPoints').innerText = barcaTotal;
+
+            fanPointsText = `⚽ نقاط المشجعين – ريال مدريد ⚔️ برشلونة:\n⚪👑 ريال مدريد: ${rmTotal} نقطة\n🔵🔴 برشلونة: ${barcaTotal} نقطة\n`;
+            if (rmTotal > barcaTotal) fanPointsText += `✅ ريال مدريد يتقدم!`;
+            else if (barcaTotal > rmTotal) fanPointsText += `✅ برشلونة يتقدم!`;
+            else fanPointsText += `🤝 تعادل في النقاط!`;
+        }
+
+        function copyFanPointsText(btnElement) {
+            copyToClipboard(fanPointsText, btnElement);
+        }
+
+        function getBadgeTitle(badge) {
+            const titles = {
+                '🎯': 'العرّاف - أول تطابق بالملي',
+                '🦊': 'الثعلب - تفرّد بمسار صحيح',
+                '⚽': 'الهداف - الأقرب لمجموع الأهداف الفعلية',
+                '🤝': 'خبير التعادلات - أكثر من توقع تعادل صحيح',
+                '🚀': 'الصاروخ - أكبر صعود في الترتيب',
+                '🌟': 'أفضل متنبئ اليوم - 80%+ تطابق بالملي (+5 نقاط)',
+                '👑': 'المتصدر',
+                '🃏': 'قبعة المهرج - أقل النقاط'
+            };
+            return titles[badge] || '';
+        }
+
+        function fireConfetti() {
+            if (typeof confetti !== 'undefined' && confettiReady) {
+                confetti({
+                    particleCount: 150,
+                    spread: 100,
+                    origin: { y: 0.6 },
+                    colors: ['#fbbf24', '#10b981', '#3b82f6', '#ef4444', '#8b5cf6']
+                });
+                setTimeout(() => {
+                    confetti({
+                        particleCount: 80,
+                        spread: 80,
+                        origin: { y: 0.5, x: 0.3 },
+                        colors: ['#fbbf24', '#10b981']
+                    });
+                }, 300);
+                setTimeout(() => {
+                    confetti({
+                        particleCount: 80,
+                        spread: 80,
+                        origin: { y: 0.5, x: 0.7 },
+                        colors: ['#fbbf24', '#10b981']
+                    });
+                }, 600);
+            }
+        }
+
+        function calculateStats() {
+            let stats = predictorNames.map(name => ({
+                name: name,
+                exact: 0,
+                outcome: 0,
+                wrong: 0,
+                goals: 0,
+                score21_12: 0,
+                draws: 0,
+                unique: 0
+            }));
+            matchesData.forEach((match, mIdx) => {
+                let resH = actualScores[mIdx].h;
+                let resA = actualScores[mIdx].a;
+                let actualOutcome = null;
+                let matchPlayed = (resH !== null && resA !== null);
+                if (matchPlayed) {
+                    let diff = resH - resA;
+                    actualOutcome = diff > 0 ? 'H' : (diff < 0 ? 'A' : 'D');
+                }
+                let predFreq = {};
+                match.preds.forEach(p => { let pTrim = p.trim();
+                    predFreq[pTrim] = (predFreq[pTrim] || 0) + 1; });
+                match.preds.forEach((p, pIdx) => {
+                    let pTrim = p.trim();
+                    let parts = pTrim.split(/ - /).map(n => parseInt(n));
+                    let predH = parts[0],
+                        predA = parts[1];
+                    let diff = predH - predA;
+                    let predOutcome = diff > 0 ? 'H' : (diff < 0 ? 'A' : 'D');
+                    stats[pIdx].goals += (predH + predA);
+                    if (predOutcome === 'D') stats[pIdx].draws++;
+                    if ((predH === 2 && predA === 1) || (predH === 1 && predA === 2)) stats[pIdx].score21_12++;
+                    if (predFreq[pTrim] === 1) stats[pIdx].unique++;
+                    if (matchPlayed) {
+                        if (resH === predH && resA === predA) stats[pIdx].exact++;
+                        else if (actualOutcome === predOutcome) stats[pIdx].outcome++;
+                        else stats[pIdx].wrong++;
+                    }
+                });
+            });
+
+            const getTopTwoHTML = (arr, key, isMin = false, suffix = "") => {
+                let sorted = [...arr].sort((a, b) => isMin ? a[key] - b[key] : b[key] - a[key]);
+                let p1 = sorted[0];
+                let html =
+                    `1- ${getDisplayName(p1.name)} <span class="stats-val">(${p1[key]} ${suffix})</span>`;
+                let textRep = `1- ${getDisplayName(p1.name)} : ${p1[key]} ${suffix}`;
+                if (sorted[1]) {
+                    let p2 = sorted[1];
+                    html +=
+                        `<br>2- ${getDisplayName(p2.name)} <span class="stats-val">(${p2[key]} ${suffix})</span>`;
+                    textRep += `\n2- ${getDisplayName(p2.name)} : ${p2[key]} ${suffix}`;
+                }
+                return { html, textRep };
+            };
+
+            let statExact = getTopTwoHTML(stats, 'exact', false, 'توقعات مطابقة');
+            let statOutcome = getTopTwoHTML(stats, 'outcome', false, 'مسار صحيح');
+            let statWrong = getTopTwoHTML(stats, 'wrong', false, 'خطأ');
+            let statMostGoals = getTopTwoHTML(stats, 'goals', false, 'هدف');
+            let statLeastGoals = getTopTwoHTML(stats, 'goals', true, 'هدف');
+            let stat21 = getTopTwoHTML(stats, 'score21_12', false, 'مرات');
+            let statDraws = getTopTwoHTML(stats, 'draws', false, 'مرات');
+            let statUnique = getTopTwoHTML(stats, 'unique', false, 'مرات');
+
+            document.getElementById('statExact').innerHTML = statExact.html;
+            document.getElementById('statOutcome').innerHTML = statOutcome.html;
+            document.getElementById('statMostGoals').innerHTML = statMostGoals.html;
+            document.getElementById('statLeastGoals').innerHTML = statLeastGoals.html;
+            document.getElementById('stat21').innerHTML = stat21.html;
+            document.getElementById('statDraws').innerHTML = statDraws.html;
+            document.getElementById('statUnique').innerHTML = statUnique.html;
+            document.getElementById('statWrong').innerHTML = statWrong.html;
+
+            statsReportData =
+                `📊 إحصائيات وأرقام التوقعات 📊\n\n` +
+                `🎯 التوقعات المطابقة بالملي:\n${statExact.textRep}\n\n` +
+                `✅ التوقعات الصحيحة (كمسار):\n${statOutcome.textRep}\n\n` +
+                `⚽ الأكثر توقعاً للأهداف:\n${statMostGoals.textRep}\n\n` +
+                `🛡️ الأقل توقعاً للأهداف:\n${statLeastGoals.textRep}\n\n` +
+                `🎲 الاعتماد على (2-1 أو 1-2):\n${stat21.textRep}\n\n` +
+                `🤝 الأكثر توقعاً للتعادلات:\n${statDraws.textRep}\n\n` +
+                `👽 التوقعات الفريدة (غرد وحيداً):\n${statUnique.textRep}\n\n` +
+                `❌ التوقعات الخاطئة تماماً:\n${statWrong.textRep}\n\n` +
+                fanPointsText;
+        }
+
+        function normalizeName(name) { return name.replace(/[أإآا]/g, 'ا').trim(); }
+
+        function getPrevRankMap(dailyTotals) {
+            const historyRaw = document.getElementById('historyInput').value;
+            const historyNorm = normalizeName(historyRaw);
+            const hasW = historyNorm.includes("نقاط الاسبوع");
+            if (!hasW) return null;
+            let map = {};
+            predictorNames.forEach((name, i) => {
+                let wPts = dailyTotals[i] + extractPts(historyNorm, name, "نقاط الاسبوع");
+                let prevW = wPts - dailyTotals[i];
+                map[getDisplayName(name)] = prevW;
+            });
+            let sorted = Object.entries(map).sort((a, b) => b[1] - a[1]);
+            let rankMap = {};
+            sorted.forEach((entry, idx) => { rankMap[entry[0]] = idx; });
+            return rankMap;
+        }
+
+        function updateHistory(dailyTotals) {
+            const historyRaw = document.getElementById('historyInput').value;
+            const historyNorm = normalizeName(historyRaw);
+            const hasW = historyNorm.includes("نقاط الاسبوع");
+            const hasM = historyNorm.includes("نقاط الشهر");
+            document.getElementById('rowWeek').style.display = hasW ? 'table-row' : 'none';
+            document.getElementById('rowMonth').style.display = hasM ? 'table-row' : 'none';
+
+            let wVals = new Array(predictorNames.length).fill(0);
+            let mVals = new Array(predictorNames.length).fill(0);
+
+            predictorNames.forEach((name, i) => {
+                if (hasW) {
+                    let val = dailyTotals[i] + extractPts(historyNorm, name, "نقاط الاسبوع");
+                    wVals[i] = val;
+                    document.querySelectorAll('.w-pts')[i].innerText = val;
+                }
+                if (hasM) {
+                    let val = dailyTotals[i] + extractPts(historyNorm, name, "نقاط الشهر");
+                    mVals[i] = val;
+                    document.querySelectorAll('.m-pts')[i].innerText = val;
+                }
+            });
+
+            if (hasW) {
+                let maxW = Math.max(...wVals);
+                let wLeaderIdx = wVals.indexOf(maxW);
+                weeklyLeader = predictorNames[wLeaderIdx];
+            } else { weeklyLeader = null; }
+            if (hasM) {
+                let maxM = Math.max(...mVals);
+                let mLeaderIdx = mVals.indexOf(maxM);
+                monthlyLeader = predictorNames[mLeaderIdx];
+            } else { monthlyLeader = null; }
+
+            updateLiveRankings();
+            updateFanWeekMonthPoints(wVals, mVals, hasW, hasM);
+        }
+
+        function extractPts(normalizedText, name, normalizedSection) {
+            const idx = normalizedText.indexOf(normalizedSection);
+            if (idx === -1) return 0;
+            const sub = normalizedText.substring(idx);
+            const regex = new RegExp(normalizeName(name) + "[^0-9]*(\\d+)", "u");
+            const match = sub.match(regex);
+            return match ? parseInt(match[1]) : 0;
+        }
+
+        function customSortDetailed(a, b) {
+            if (b.pts !== a.pts) return b.pts - a.pts;
+            if (b.exact !== a.exact) return b.exact - a.exact;
+            if (b.outcome !== a.outcome) return b.outcome - a.outcome;
+            if (a.goalDiff !== b.goalDiff) return a.goalDiff - b.goalDiff;
+            return a.name.localeCompare(b.name, 'ar');
+        }
+
+        function getRankMap(detailedList) {
+            let sorted = [...detailedList].sort(customSortDetailed);
+            let map = {};
+            sorted.forEach((item, idx) => map[item.name] = idx);
+            return map;
+        }
+
+        function updateLiveRankings() {
+            const dPtsCells = document.querySelectorAll('.d-pts');
+            const wPtsCells = document.querySelectorAll('.w-pts');
+            const mPtsCells = document.querySelectorAll('.m-pts');
+            const hasWeek = document.getElementById('rowWeek').style.display !== 'none';
+            const hasMonth = document.getElementById('rowMonth').style.display !== 'none';
+
+            document.getElementById('cardPremierWeekly').style.display = hasWeek ? 'block' : 'none';
+            document.getElementById('cardPremierMonthly').style.display = hasMonth ? 'block' : 'none';
+            document.getElementById('cardYellowWeekly').style.display = hasWeek ? 'block' : 'none';
+            document.getElementById('cardYellowMonthly').style.display = hasMonth ? 'block' : 'none';
+            document.getElementById('cardPairsDaily').style.display = 'block';
+            document.getElementById('cardPairsWeekly').style.display = hasWeek ? 'block' : 'none';
+            document.getElementById('cardPairsMonthly').style.display = hasMonth ? 'block' : 'none';
+
+            const { exactCounts, correctCounts, goalDiffs, actualTotalGoals } = computePlayerStats();
+            const prevRankMap = getPrevRankMap(
+                predictorNames.map((_, i) => parseInt(dPtsCells[i].firstChild.textContent) || 0)
+            );
+
+            let dailyPtsArr = predictorNames.map((_, i) => parseInt(dPtsCells[i].firstChild.textContent) || 0);
+            playerBadges = computeBadges(dailyPtsArr, exactCounts, correctCounts, goalDiffs, actualTotalGoals,
+            prevRankMap);
+
+            let dDetailed = [],
+                wDetailed = [],
+                mDetailed = [];
+            predictorNames.forEach((name, i) => {
+                let dPts = parseInt(dPtsCells[i].firstChild.textContent) || 0;
+                let disp = getDisplayName(name);
+                dDetailed.push({
+                    name: disp,
+                    realName: name,
+                    pts: dPts,
+                    exact: exactCounts[i],
+                    outcome: correctCounts[i],
+                    goalDiff: goalDiffs[i],
+                    index: i
+                });
+                if (hasWeek) {
+                    let wPts = parseInt(wPtsCells[i].innerText) || 0;
+                    wDetailed.push({
+                        name: disp,
+                        realName: name,
+                        pts: wPts,
+                        exact: exactCounts[i],
+                        outcome: correctCounts[i],
+                        goalDiff: goalDiffs[i],
+                        index: i
+                    });
+                }
+                if (hasMonth) {
+                    let mPts = parseInt(mPtsCells[i].innerText) || 0;
+                    mDetailed.push({
+                        name: disp,
+                        realName: name,
+                        pts: mPts,
+                        exact: exactCounts[i],
+                        outcome: correctCounts[i],
+                        goalDiff: goalDiffs[i],
+                        index: i
+                    });
+                }
+            });
+
+            dDetailed.sort(customSortDetailed);
+            if (hasWeek) wDetailed.sort(customSortDetailed);
+            if (hasMonth) mDetailed.sort(customSortDetailed);
+
+            let wPrevMap = null,
+                mPrevMap = null;
+            if (hasWeek) {
+                let wPrevList = wDetailed.map(item => ({
+                    name: item.name,
+                    pts: item.pts - (dDetailed.find(d => d.name === item.name)?.pts || 0),
+                    exact: item.exact,
+                    outcome: item.outcome,
+                    goalDiff: item.goalDiff
+                }));
+                wPrevMap = getRankMap(wPrevList);
+            }
+            if (hasMonth) {
+                let mPrevList = mDetailed.map(item => ({
+                    name: item.name,
+                    pts: item.pts - (dDetailed.find(d => d.name === item.name)?.pts || 0),
+                    exact: item.exact,
+                    outcome: item.outcome,
+                    goalDiff: item.goalDiff
+                }));
+                mPrevMap = getRankMap(mPrevList);
+            }
+
+            renderList('liveDaily', dDetailed, false, prevRankMap, false, dailyPtsArr);
+            if (hasWeek) {
+                let wPremier = wDetailed.slice(0, 5);
+                let wYellow = wDetailed.slice(5, 10);
+                renderList('premierWeekly', wPremier, true, wPrevMap, true);
+                renderList('yellowWeekly', wYellow, true, wPrevMap, true);
+            }
+            if (hasMonth) {
+                let mPremier = mDetailed.slice(0, 5);
+                let mYellow = mDetailed.slice(5, 10);
+                renderList('premierMonthly', mPremier, true, mPrevMap, true);
+                renderList('yellowMonthly', mYellow, true, mPrevMap, true);
+            }
+
+            let jokerList = [...dDetailed].reverse().slice(0, 3);
+            renderJokerList('jokerList', jokerList);
+
+            let actualTotalGoalsForPairs = 0;
+            matchesData.forEach((m, idx) => {
+                if (actualScores[idx].h !== null && actualScores[idx].a !== null) {
+                    actualTotalGoalsForPairs += actualScores[idx].h + actualScores[idx].a;
+                }
+            });
+            let pairsDaily = [],
+                pairsWeekly = [],
+                pairsMonthly = [];
+            pairs.forEach(pair => {
+                const idx1 = pair.indices[0],
+                    idx2 = pair.indices[1];
+                const dPts1 = parseInt(dPtsCells[idx1].firstChild.textContent) || 0;
+                const dPts2 = parseInt(dPtsCells[idx2].firstChild.textContent) || 0;
+                const label =
+                    `${getDisplayName(predictorNames[idx1])} و${getDisplayName(predictorNames[idx2])}`;
+                let wPts1 = 0,
+                    wPts2 = 0,
+                    mPts1 = 0,
+                    mPts2 = 0;
+                if (hasWeek) {
+                    wPts1 = parseInt(wPtsCells[idx1].innerText) || 0;
+                    wPts2 = parseInt(wPtsCells[idx2].innerText) || 0;
+                }
+                if (hasMonth) {
+                    mPts1 = parseInt(mPtsCells[idx1].innerText) || 0;
+                    mPts2 = parseInt(mPtsCells[idx2].innerText) || 0;
+                }
+                const exactSum = exactCounts[idx1] + exactCounts[idx2];
+                const outcomeSum = correctCounts[idx1] + correctCounts[idx2];
+                let pairGoalSum = 0;
+                matchesData.forEach((match, mIdx) => {
+                    if (actualScores[mIdx].h !== null && actualScores[mIdx].a !== null) {
+                        let p1 = match.preds[idx1].trim().split(/ - /).map(n => parseInt(n));
+                        let p2 = match.preds[idx2].trim().split(/ - /).map(n => parseInt(n));
+                        pairGoalSum += p1[0] + p1[1] + p2[0] + p2[1];
+                    }
+                });
+                const goalDiff = Math.abs(pairGoalSum - 2 * actualTotalGoalsForPairs);
+
+                pairsDaily.push({ label, pts: dPts1 + dPts2, exact: exactSum, outcome: outcomeSum, goalDiff });
+                if (hasWeek) pairsWeekly.push({ label, pts: wPts1 + wPts2, exact: exactSum, outcome: outcomeSum,
+                    goalDiff });
+                if (hasMonth) pairsMonthly.push({ label, pts: mPts1 + mPts2, exact: exactSum, outcome: outcomeSum,
+                    goalDiff });
+            });
+
+            const sortPairsDetailed = (a, b) => {
+                if (b.pts !== a.pts) return b.pts - a.pts;
+                if (b.exact !== a.exact) return b.exact - a.exact;
+                if (b.outcome !== a.outcome) return b.outcome - a.outcome;
+                if (a.goalDiff !== b.goalDiff) return a.goalDiff - b.goalDiff;
+                return a.label.localeCompare(b.label, 'ar');
+            };
+
+            pairsDaily.sort(sortPairsDetailed);
+            if (hasWeek) pairsWeekly.sort(sortPairsDetailed);
+            if (hasMonth) pairsMonthly.sort(sortPairsDetailed);
+
+            renderPairList('pairsDaily', pairsDaily);
+            if (hasWeek) renderPairList('pairsWeekly', pairsWeekly);
+            if (hasMonth) renderPairList('pairsMonthly', pairsMonthly);
+
+            document.querySelectorAll('.d-pts').forEach((td, i) => {
+                const disp = getDisplayName(predictorNames[i]);
+                let badgeStr = '';
+                if (playerBadges[i] && playerBadges[i].length > 0) {
+                    badgeStr = ' ' + playerBadges[i].map(b =>
+                        `<span class="badge-icon" title="${getBadgeTitle(b)}">${b}</span>`).join('');
+                }
+                let ptsNum = dailyPtsArr[i];
+                td.innerHTML =
+                    `${ptsNum} <span class="sub-name">${disp}${badgeStr}</span>`;
+            });
+        }
+
+        function renderList(elementId, list, isVeteranStyle, prevMap, useLeagueStyle = false, dailyPtsArr = null) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            const ptsColor = isVeteranStyle ? 'var(--vet-gold)' : 'var(--blue)';
+            let maxPts = list.length > 0 ? Math.max(...list.map(item => item.pts)) : 1;
+            el.innerHTML = list.map((item, index) => {
+                let rankClass = index < 3 ? `rank-${index + 1}` : '';
+                let indicator = '<span class="indicator"></span>';
+                if (prevMap && prevMap[item.name] !== undefined) {
+                    let prevR = prevMap[item.name];
+                    if (index < prevR) indicator = '<span class="indicator" style="color: #10b981;">▲</span>';
+                    else if (index > prevR) indicator =
+                        '<span class="indicator" style="color: #ef4444;">▼</span>';
+                    else indicator =
+                        '<span class="indicator" style="color: #9ca3af; font-size: 0.7rem;"> </span>';
+                }
+                let crownHTML = '';
+                if (weeklyLeader === item.realName || monthlyLeader === item.realName) {
+                    crownHTML = ' <span class="crown-icon-sm">👑</span>';
+                }
+                let badgeHTML = '';
+                if (playerBadges[item.index] && playerBadges[item.index].length > 0) {
+                    badgeHTML = ' ' + playerBadges[item.index].map(b =>
+                        `<span class="badge-icon" title="${getBadgeTitle(b)}">${b}</span>`).join('');
+                }
+                let progressHTML = '';
+                if (dailyPtsArr && maxPts > 0) {
+                    let pct = Math.round((item.pts / maxPts) * 100);
+                    progressHTML =
+                        `<div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>`;
+                }
+                return `<li class="${rankClass}">
+                        <span><span class="rank-pos">${index + 1}</span> <span class="player-clickable" onclick="showPlayerModal('${(item.realName||'').replace(/'/g,"\\'")}',${item.index})">${item.name}${crownHTML}${badgeHTML}</span> ${indicator}</span> 
+                        <span style="color:${ptsColor}; font-weight: bold;">${item.pts} نقطة</span>
+                        ${progressHTML}
+                    </li>`;
+            }).join('');
+        }
+
+        function renderJokerList(elementId, list) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.innerHTML = list.map((item, index) => {
+                return `<li>
+                        <span><span class="rank-pos">${index + 1}</span> <span class="player-clickable" onclick="showPlayerModal('${item.realName.replace(/'/g,"\\'")}',${item.index})">${item.name}</span> <span class="joker-icon">🃏</span></span> 
+                        <span style="color:#ef4444; font-weight: bold;">${item.pts} نقطة</span>
+                    </li>`;
+            }).join('');
+        }
+
+        function renderPairList(elementId, list) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            const ptsColor = 'var(--vet-gold)';
+            el.innerHTML = list.map((item, index) => {
+                let rankClass = index < 3 ? `rank-${index + 1}` : '';
+                return `<li class="${rankClass}">
+                        <span><span class="rank-pos">${index + 1}</span> ${item.label}</span> 
+                        <span style="color:${ptsColor}; font-weight: bold;">${item.pts} نقطة</span>
+                    </li>`;
+            }).join('');
+        }
+
+        function showPlayerModal(realName, playerIndex) {
+            const modal = document.getElementById('playerModal');
+            const nameEl = document.getElementById('modalPlayerName');
+            const contentEl = document.getElementById('modalPlayerContent');
+            const disp = getDisplayName(realName);
+            nameEl.innerHTML = `بطاقة اللاعب: ${disp}`;
+
+            const { exactCounts, correctCounts, goalDiffs, actualTotalGoals } = computePlayerStats();
+            let totalExact = exactCounts[playerIndex];
+            let totalCorrect = correctCounts[playerIndex];
+            let totalWrong = 0;
+            let totalGoals = 0;
+            matchesData.forEach((match, mIdx) => {
+                if (actualScores[mIdx].h !== null && actualScores[mIdx].a !== null) {
+                    let parts = match.preds[playerIndex].trim().split(/ - /).map(n => parseInt(n));
+                    totalGoals += parts[0] + parts[1];
+                    let resH = actualScores[mIdx].h;
+                    let resA = actualScores[mIdx].a;
+                    let actualOutcome = (resH - resA) > 0 ? 'H' : ((resH - resA) < 0 ? 'A' : 'D');
+                    let predOutcome = (parts[0] - parts[1]) > 0 ? 'H' : ((parts[0] - parts[1]) < 0 ? 'A' : 'D');
+                    if (!(resH === parts[0] && resA === parts[1]) && actualOutcome !== predOutcome) {
+                        totalWrong++;
+                    }
+                }
+            });
+            let totalOutcomeOnly = totalCorrect - totalExact;
+
+            let predFreq = {};
+            matchesData.forEach(match => {
+                let pTrim = match.preds[playerIndex].trim();
+                predFreq[pTrim] = (predFreq[pTrim] || 0) + 1;
+            });
+            let mostRepeated = Object.entries(predFreq).sort((a, b) => b[1] - a[1])[0];
+            let mostRepeatedStr = mostRepeated ? `${mostRepeated[0]} (${mostRepeated[1]} مرات)` : '-';
+
+            let badgesHTML = '';
+            if (playerBadges[playerIndex] && playerBadges[playerIndex].length > 0) {
+                badgesHTML = '<div style="margin-top:10px;"><strong>الأوسمة:</strong> ' + playerBadges[playerIndex].map(b =>
+                    `<span class="badge-icon" title="${getBadgeTitle(b)}" style="font-size:1.3rem;">${b}</span>`).join(
+                    ' ') + '</div>';
+            }
+
+            contentEl.innerHTML = `
+                <div class="modal-stat-row"><span>🎯 التطابقات بالملي:</span><span><strong>${totalExact}</strong></span></div>
+                <div class="modal-stat-row"><span>✅ المسارات الصحيحة:</span><span><strong>${totalOutcomeOnly}</strong></span></div>
+                <div class="modal-stat-row"><span>❌ التوقعات الخاطئة:</span><span><strong>${totalWrong}</strong></span></div>
+                <div class="modal-stat-row"><span>⚽ مجموع الأهداف المتوقعة:</span><span><strong>${totalGoals}</strong></span></div>
+                <div class="modal-stat-row"><span>🎯 مجموع الأهداف الفعلية:</span><span><strong>${actualTotalGoals}</strong></span></div>
+                <div class="modal-stat-row"><span>📏 مدى الاقتراب (الفرق):</span><span><strong>${goalDiffs[playerIndex]}</strong></span></div>
+                <div class="modal-stat-row"><span>🔄 أكثر نتيجة مكررة:</span><span><strong>${mostRepeatedStr}</strong></span></div>
+                ${badgesHTML}
+            `;
+            modal.classList.add('show');
+        }
+
+        function closePlayerModal() {
+            document.getElementById('playerModal').classList.remove('show');
+        }
+
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'playerModal') {
+                closePlayerModal();
+            }
+        });
+
+        function updateH2H() {
+            const s1 = document.getElementById('h2hPlayer1');
+            const s2 = document.getElementById('h2hPlayer2');
+            const resultDiv = document.getElementById('h2hResult');
+            const placeholder = document.getElementById('h2hPlaceholder');
+            if (!s1.value || !s2.value || s1.value === s2.value) {
+                resultDiv.style.display = 'none';
+                placeholder.style.display = 'block';
+                return;
+            }
+            resultDiv.style.display = 'block';
+            placeholder.style.display = 'none';
+            const idx1 = parseInt(s1.value);
+            const idx2 = parseInt(s2.value);
+            const { exactCounts, correctCounts, goalDiffs } = computePlayerStats();
+            const disp1 = getDisplayName(predictorNames[idx1]);
+            const disp2 = getDisplayName(predictorNames[idx2]);
+
+            const tableEl = document.getElementById('h2hTable');
+            tableEl.innerHTML = `
+                <tr><th>المعيار</th><th>${disp1}</th><th>${disp2}</th></tr>
+                <tr><td>نقاط اليوم</td><td>${document.querySelectorAll('.d-pts')[idx1]?.firstChild?.textContent||0}</td><td>${document.querySelectorAll('.d-pts')[idx2]?.firstChild?.textContent||0}</td></tr>
+                <tr><td>تطابق بالملي</td><td>${exactCounts[idx1]}</td><td>${exactCounts[idx2]}</td></tr>
+                <tr><td>مسار صحيح</td><td>${correctCounts[idx1]}</td><td>${correctCounts[idx2]}</td></tr>
+                <tr><td>الاقتراب من الأهداف</td><td>${goalDiffs[idx1]}</td><td>${goalDiffs[idx2]}</td></tr>
+            `;
+
+            drawRadarChart(idx1, idx2, exactCounts, correctCounts, goalDiffs);
+        }
+
+        function drawRadarChart(idx1, idx2, exactCounts, correctCounts, goalDiffs) {
+            const canvas = document.getElementById('radarCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            const labels = ['تطابق بالملي', 'مسار صحيح', 'إجمالي صحيح', 'قرب الأهداف'];
+            const maxExact = Math.max(1, ...exactCounts);
+            const maxCorrect = Math.max(1, ...correctCounts);
+            const maxGoalDiff = Math.max(1, ...goalDiffs);
+            const data1 = [
+                exactCounts[idx1] / maxExact,
+                correctCounts[idx1] / maxCorrect,
+                correctCounts[idx1] / maxCorrect,
+                1 - (goalDiffs[idx1] / maxGoalDiff)
+            ];
+            const data2 = [
+                exactCounts[idx2] / maxExact,
+                correctCounts[idx2] / maxCorrect,
+                correctCounts[idx2] / maxCorrect,
+                1 - (goalDiffs[idx2] / maxGoalDiff)
+            ];
+
+            const cx = w / 2;
+            const cy = h / 2;
+            const radius = Math.min(cx, cy) - 40;
+            const numAxes = 4;
+
+            for (let level = 1; level <= 4; level++) {
+                ctx.beginPath();
+                for (let i = 0; i < numAxes; i++) {
+                    let angle = (Math.PI * 2 / numAxes) * i - Math.PI / 2;
+                    let x = cx + radius * (level / 4) * Math.cos(angle);
+                    let y = cy + radius * (level / 4) * Math.sin(angle);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.strokeStyle = '#d1d5db';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+
+            for (let i = 0; i < numAxes; i++) {
+                let angle = (Math.PI * 2 / numAxes) * i - Math.PI / 2;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + radius * Math.cos(angle), cy + radius * Math.sin(angle));
+                ctx.strokeStyle = '#9ca3af';
+                ctx.stroke();
+                let lx = cx + (radius + 20) * Math.cos(angle);
+                let ly = cy + (radius + 20) * Math.sin(angle);
+                ctx.fillStyle = '#1f2937';
+                ctx.font = '11px Segoe UI, Tahoma';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(labels[i], lx, ly);
+            }
+
+            function drawPolygon(data, color, fillColor) {
+                ctx.beginPath();
+                for (let i = 0; i < numAxes; i++) {
+                    let angle = (Math.PI * 2 / numAxes) * i - Math.PI / 2;
+                    let val = Math.max(0, Math.min(1, data[i]));
+                    let x = cx + radius * val * Math.cos(angle);
+                    let y = cy + radius * val * Math.sin(angle);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.fillStyle = fillColor;
+                ctx.fill();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            drawPolygon(data1, '#2563eb', 'rgba(37,99,235,0.2)');
+            drawPolygon(data2, '#ef4444', 'rgba(239,68,68,0.2)');
+
+            ctx.fillStyle = '#2563eb';
+            ctx.fillRect(cx - 80, h - 25, 15, 15);
+            ctx.fillStyle = '#1f2937';
+            ctx.textAlign = 'left';
+            ctx.fillText(getDisplayName(predictorNames[idx1]), cx - 60, h - 15);
+
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(cx + 20, h - 25, 15, 15);
+            ctx.fillText(getDisplayName(predictorNames[idx2]), cx + 40, h - 15);
+        }
+
+        function generateAndCopyFullDetails(btnElement) {
+            let report = "⚽ تفاصيل المباريات والتوقعات ⚽\n\n";
+            matchesData.forEach((match, mIdx) => {
+                let resH = actualScores[mIdx].h;
+                let resA = actualScores[mIdx].a;
+                let resultStr = (resH !== null && resA !== null) ? `${resH} - ${resA}` : "لم تنتهِ";
+                report += `🔹 ${match.name} | النتيجة: [ ${resultStr} ]\n`;
+                let preds = [];
+                predictorNames.forEach((name, i) => preds.push(
+                    `${getDisplayName(name)}: [${match.preds[i].trim()}]`));
+                report += preds.join(" | ") + "\n\n";
+            });
+            const dPtsCells = document.querySelectorAll('.d-pts');
+            const wPtsCells = document.querySelectorAll('.w-pts');
+            const mPtsCells = document.querySelectorAll('.m-pts');
+            const hasWeek = document.getElementById('rowWeek').style.display !== 'none';
+            const hasMonth = document.getElementById('rowMonth').style.display !== 'none';
+            let dList = [],
+                wList = [],
+                mList = [];
+            predictorNames.forEach((name, i) => {
+                let disp = getDisplayName(name);
+                dList.push({ name: disp, pts: parseInt(dPtsCells[i].firstChild.textContent) || 0 });
+                if (hasWeek) wList.push({ name: disp, pts: parseInt(wPtsCells[i].innerText) || 0 });
+                if (hasMonth) mList.push({ name: disp, pts: parseInt(mPtsCells[i].innerText) || 0 });
+            });
+            dList.sort((a, b) => b.pts - a.pts);
+            if (hasWeek) wList.sort((a, b) => b.pts - a.pts);
+            if (hasMonth) mList.sort((a, b) => b.pts - a.pts);
+            report += `\n📊 نقاط اليوم:\n`;
+            dList.forEach((p, i) => report += `${i+1}- ${p.name.padEnd(15)} ${p.pts} نقاط\n`);
+            if (hasWeek) { report += `\n🌟 نقاط الأسبوع:\n`;
+                wList.forEach((p, i) => report += `${i+1}- ${p.name.padEnd(15)} ${p.pts} نقاط\n`); }
+            if (hasMonth) { report += `\n🏆 نقاط الشهر:\n`;
+                mList.forEach((p, i) => report += `${i+1}- ${p.name.padEnd(15)} ${p.pts} نقاط\n`); }
+            report += `\n` + fanPointsText;
+            if (fanWeekText) report += `\n` + fanWeekText;
+            if (fanMonthText) report += `\n` + fanMonthText;
+            const historyText = document.getElementById('historyInput').value.trim();
+            if (historyText) { report += `\n========================\n⏪ نقاط أمس:\n\n${historyText}\n`; }
+            copyToClipboard(report, btnElement);
+        }
+
+        function generateAndCopy(btnElement) {
+            const dPtsCells = document.querySelectorAll('.d-pts');
+            const wPtsCells = document.querySelectorAll('.w-pts');
+            const mPtsCells = document.querySelectorAll('.m-pts');
+            const hasWeek = document.getElementById('rowWeek').style.display !== 'none';
+            const hasMonth = document.getElementById('rowMonth').style.display !== 'none';
+            let dList = [],
+                wList = [],
+                mList = [];
+            predictorNames.forEach((name, i) => {
+                dList.push({ name: getDisplayName(name), pts: parseInt(dPtsCells[i].firstChild.textContent) || 0 });
+                if (hasWeek) wList.push({ name: getDisplayName(name), pts: parseInt(wPtsCells[i].innerText) || 0 });
+                if (hasMonth) mList.push({ name: getDisplayName(name), pts: parseInt(mPtsCells[i].innerText) || 0 });
+            });
+            dList.sort((a, b) => b.pts - a.pts);
+            let report = `📊 نتائج التوقعات اليومية:\n`;
+            dList.forEach((p, i) => report += `${i+1}- ${p.name.padEnd(15)} ${p.pts} نقاط\n`);
+            if (hasWeek) { report += `\n🌟 نقاط الأسبوع:\n`;
+                wList.sort((a, b) => b.pts - a.pts);
+                wList.forEach((p, i) => report += `${i+1}- ${p.name.padEnd(15)} ${p.pts} نقاط\n`); }
+            if (hasMonth) { report += `\n🏆 نقاط الشهر:\n`;
+                mList.sort((a, b) => b.pts - a.pts);
+                mList.forEach((p, i) => report += `${i+1}- ${p.name.padEnd(15)} ${p.pts} نقاط\n`); }
+            report += `\n` + fanPointsText;
+            if (fanWeekText) report += `\n` + fanWeekText;
+            if (fanMonthText) report += `\n` + fanMonthText;
+            copyToClipboard(report, btnElement);
+        }
+
+        function copyStatsText(btnElement) { copyToClipboard(statsReportData, btnElement); }
+
+        function copyToClipboard(text, btnElement) {
+            const orig = btnElement.innerHTML;
+            const ok = "✅ تم النسخ!";
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    btnElement.innerHTML = ok;
+                    setTimeout(() => btnElement.innerHTML = orig, 2000);
+                }).catch(() => fallbackCopy(text, btnElement, orig, ok));
+            } else fallbackCopy(text, btnElement, orig, ok);
+        }
+
+        function fallbackCopy(text, btn, orig, ok) {
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.left = "-9999px";
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy');
+                btn.innerHTML = ok;
+                setTimeout(() => btn.innerHTML = orig, 2000); } catch (e) {}
+            document.body.removeChild(ta);
+        }
+
+        function resetTable() {
+            if (confirm("تصفير نتائج المباريات؟")) {
+                actualScores = matchesData.map(() => ({ h: null, a: null }));
+                previousDailyLeader = null;
+                playerBadges = {};
+                dailyPerfectBadgePlayer = null;
+                weeklyLeader = null;
+                monthlyLeader = null;
+                initTable();
+            }
+        }
+
+        function saveDataToFile() {
+            const data = { matches: matchesData, scores: actualScores, historyText: document.getElementById('historyInput')
+                    .value };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `توقعات_${new Date().toLocaleDateString('en-GB')}.txt`;
+            a.click();
+        }
+
+        function importDataFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    matchesData = data.matches;
+                    actualScores = data.scores;
+                    document.getElementById('historyInput').value = data.historyText || "";
+                    previousDailyLeader = null;
+                    playerBadges = {};
+                    dailyPerfectBadgePlayer = null;
+                    weeklyLeader = null;
+                    monthlyLeader = null;
+                    initTable();
+                } catch (err) {}
+            };
+            reader.readAsText(file);
+        }
+
+        initTable();
+        async function captureAllLeagues(btnElement) {
+            const ready = await ensureHtml2canvas();
+            if (!ready) { alert("❌ خطأ: لم يتم تحميل مكتبة التصوير.");
+                return; }
+            const sections = [
+                { id: 'fanSection', title: 'نقاط المشجعين' },
+                { id: 'fanWeekSection', title: 'نقاط المشجعين الأسبوعية' },
+                { id: 'fanMonthSection', title: 'نقاط المشجعين الشهرية' },
+                { id: 'dailyLiveSection', title: 'الترتيب اليومي' },
+                { id: 'premierSection', title: 'الدوري الممتاز' },
+                { id: 'yellowSection', title: 'دوري يلو' },
+                { id: 'pairsSection', title: 'دوري الثنائيات' }
+            ];
+            const orig = btnElement.innerHTML;
+            btnElement.innerHTML = "⏳ جاري التصوير...";
+            btnElement.disabled = true;
+            const allBtns = document.querySelectorAll(
+                '#fanSection button,#fanWeekSection button,#fanMonthSection button,#dailyLiveSection button,#premierSection button,#yellowSection button,#pairsSection button');
+            const origDisp = [];
+            allBtns.forEach(b => { origDisp.push(b.style.display);
+                b.style.display = 'none'; });
+            try {
+                const canvases = [];
+                for (let s of sections) { const el = document.getElementById(s.id); if (!el) continue;
+                    canvases.push({ canvas: await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: null }),
+                        title: s.title }); }
+                const maxW = Math.max(...canvases.map(c => c.canvas.width));
+                let totalH = 0;
+                canvases.forEach(c => totalH += c.canvas.height + 20);
+                const final = document.createElement('canvas');
+                final.width = maxW;
+                final.height = totalH + 40;
+                const ctx = final.getContext('2d');
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(0, 0, final.width, final.height);
+                let y = 0;
+                canvases.forEach(c => { ctx.drawImage(c.canvas, (maxW - c.canvas.width) / 2, y);
+                    y += c.canvas.height + 20; });
+                const link = document.createElement('a');
+                link.download = `الجداول_${new Date().toLocaleDateString('en-GB')}.png`;
+                link.href = final.toDataURL('image/png');
+                link.click();
+            } catch (e) { alert("خطأ في التصوير"); } finally { allBtns.forEach((b, i) => b.style.display = origDisp[
+                    i]);
+                btnElement.innerHTML = orig;
+                btnElement.disabled = false; }
+        }
+        window.addEventListener('DOMContentLoaded', () => { const k = localStorage.getItem('football_api_key'); if (
+                k) { const inp = document.getElementById('apiKeyInput'); if (inp) inp.value = k; }
+            populateH2HSelects(); });
+    </script>
+</body>
+</html>
